@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sai Narasimha Bommisetty: The Series</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0b0f; --bg2:#141418; --card:#1c1c22; --text:#f2f2f4; --muted:#a3a3ad; --dim:#6c6c78;
+  --red:#e50914; --red2:#b20710; --gold:#d8b25a; --green:#46d369;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0b0b0f}}
+:root[data-theme="dark"]{--bg:#0b0b0f}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;overflow-x:hidden}
+body.locked{overflow:hidden}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+.disp{font-family:'Bebas Neue',Anton,Impact,sans-serif;font-weight:400;letter-spacing:.01em}
+
+/* ===== Intro ===== */
+#intro{position:fixed;inset:0;z-index:100;background:#000;display:grid;place-items:center;overflow:hidden;transition:opacity .8s,visibility .8s}
+#intro.hide{opacity:0;visibility:hidden}
+#intro .logo{text-align:center;width:min(92vw,1100px);animation:zoom 2.6s cubic-bezier(.6,0,.4,1) forwards}
+#intro .logo h1{font-size:clamp(54px,13vw,170px);line-height:.88;background:linear-gradient(180deg,#fff 0%,#d9d9de 60%,#8a8a94 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 30px rgba(229,9,20,.35))}
+#intro .logo span{display:block;font:800 clamp(12px,1.8vw,18px) Inter;letter-spacing:.6em;color:var(--red);margin-top:10px;padding-left:.6em}
+#intro .glow{position:absolute;inset:0;background:radial-gradient(40% 40% at 50% 55%,rgba(229,9,20,.35),transparent 70%);animation:pulse 2.6s ease forwards}
+@keyframes zoom{0%{transform:scale(.6);opacity:0}25%{opacity:1;transform:scale(1)}75%{transform:scale(1.04);opacity:1}100%{transform:scale(6);opacity:0}}
+@keyframes pulse{0%{opacity:0}40%{opacity:1}100%{opacity:0}}
+
+/* ===== Who's watching ===== */
+#who{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:16px;background:radial-gradient(70% 60% at 50% 40%,#2a0a12 0%,#0b0b0f 70%);transition:opacity .6s,visibility .6s}
+#who.hide{opacity:0;visibility:hidden}
+#who h2{font-weight:500;font-size:clamp(28px,4.5vw,52px);text-align:center;margin-bottom:34px}
+.profiles{display:flex;gap:clamp(14px,2.6vw,30px);justify-content:center;flex-wrap:wrap}
+.prof{background:none;border:0;color:var(--muted);cursor:pointer;text-align:center;width:clamp(110px,13vw,150px)}
+.prof .tile{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:3px solid transparent;transition:.2s;display:grid;place-items:center;font:800 48px Inter;color:#fff}
+.prof:hover .tile,.prof:focus-visible .tile{border-color:#fff;transform:scale(1.05)}
+.prof:hover,.prof:focus-visible{color:#fff;outline:none}
+.prof b{display:block;margin-top:10px;font-size:15px;font-weight:600}
+.prof small{display:block;font-size:11px;color:var(--dim);margin-top:3px;line-height:1.35}
+.prof .tile img{width:100%;height:100%;object-fit:cover;object-position:top}
+.prof .main{position:absolute;top:6px;right:6px;font:800 9px Inter;background:var(--red);padding:2px 6px;border-radius:3px;letter-spacing:.08em}
+.t1{background:linear-gradient(160deg,#f6d6c8,#e9b8a3)}.t2{background:linear-gradient(160deg,#5aa9e6,#2d6fb5)}.t3{background:linear-gradient(160deg,#4cd07d,#1d8a48)}.t4{background:linear-gradient(160deg,#f6b73c,#d9881a)}
+.who-note{margin-top:30px;text-align:center;color:var(--dim);font-size:13px}
+
+/* ===== Nav ===== */
+nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;gap:28px;padding:16px clamp(16px,4vw,56px);background:linear-gradient(#000c,transparent);transition:background .3s}
+nav.solid{background:#0b0b0fee;backdrop-filter:blur(8px)}
+.brand{display:flex;align-items:baseline;gap:4px;font-size:28px;color:var(--red)}
+.brand small{font:800 10px Inter;letter-spacing:.3em;color:#fff}
+nav ul{display:flex;gap:20px;list-style:none;font-size:14px}
+nav ul a{color:#ddd;transition:.2s}nav ul a:hover,nav ul a.on{color:#fff;font-weight:600}
+nav .right{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:12px;color:var(--muted)}
+nav .right img{width:32px;height:32px;border-radius:5px;object-fit:cover;object-position:top;background:#3a2a2a;cursor:pointer}
+@media(max-width:900px){nav ul{display:none}}
+
+/* ===== Hero billboard ===== */
+.hero{position:relative;min-height:100svh;display:flex;align-items:center;overflow:hidden;
+  background:radial-gradient(60% 80% at 78% 40%,#3a0a14 0%,#14070c 45%,var(--bg) 80%)}
+.hero .pic{position:absolute;right:max(-4vw,-60px);bottom:0;height:94%;max-width:62%;object-fit:contain;object-position:bottom right;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 30%),linear-gradient(0deg,transparent,#000 22%);-webkit-mask-composite:source-in;
+  mask-image:linear-gradient(90deg,transparent 0%,#000 30%);filter:saturate(1.05)}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:28%;background:linear-gradient(transparent,var(--bg))}
+.hero .info{position:relative;z-index:2;padding:110px clamp(16px,4vw,56px) 120px;width:min(720px,100%)}
+.series-tag{display:flex;align-items:center;gap:8px;font:800 12px Inter;letter-spacing:.32em;color:#ddd}
+.series-tag i{font:400 30px 'Bebas Neue';color:var(--red);letter-spacing:0;font-style:normal}
+.hero h1{font-size:clamp(60px,9.5vw,138px);line-height:.86;margin-top:6px;background:linear-gradient(180deg,#fff 10%,#e3c9cf 55%,#c48a95 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .ts{font:800 clamp(13px,1.5vw,17px) Inter;letter-spacing:.55em;color:var(--red);margin:6px 0 18px}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:14px;color:#ddd}
+.meta .match{color:var(--green);font-weight:700}
+.meta .box{border:1px solid #888;padding:1px 6px;font-size:12px;border-radius:2px}
+.meta .hd{border:1px solid #888;padding:0 5px;font-size:10px;font-weight:700;border-radius:2px}
+.hero .genre{margin-top:10px;font:700 12px Inter;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.hero p.syn{margin-top:14px;font-size:clamp(15px,1.4vw,18px);line-height:1.55;color:#e4e4e8;max-width:560px}
+.cta{display:flex;gap:12px;margin-top:26px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:12px 26px;border-radius:5px;border:0;font:700 16px Inter;cursor:pointer;transition:.2s}
+.btn.play{background:#fff;color:#000}.btn.play:hover{background:#ffffffcc}
+.btn.more{background:rgba(109,109,110,.6);color:#fff}.btn.more:hover{background:rgba(109,109,110,.4)}
+.btn svg{width:22px;height:22px}
+.rating{position:absolute;right:0;bottom:22%;z-index:3;display:flex;align-items:center;gap:10px;padding:6px 40px 6px 12px;background:rgba(51,51,51,.6);border-left:3px solid #ddd;font-size:14px}
+.top10{display:inline-flex;align-items:center;gap:8px;margin-bottom:10px;font:700 15px Inter}
+.top10 b{display:grid;place-items:center;width:28px;height:28px;background:var(--red);border-radius:3px;font:800 9px/1 Inter;text-align:center}
+@media(max-width:760px){
+  .hero{align-items:flex-end}
+  .hero .pic{max-width:none;height:62%;right:50%;transform:translateX(50%);top:70px;bottom:auto;-webkit-mask-image:linear-gradient(0deg,transparent 25%,#000 60%);mask-image:linear-gradient(0deg,transparent 25%,#000 60%)}
+  .hero .info{padding-top:46svh;padding-bottom:60px;background:linear-gradient(transparent 0,var(--bg) 52svh)}
+  .rating{display:none}
+}
+
+/* ===== Sections / rows ===== */
+section{position:relative;padding:34px 0}
+.wrap{padding:0 clamp(16px,4vw,56px)}
+.eyebrow{display:flex;align-items:center;gap:8px;font:800 11px Inter;letter-spacing:.28em;color:var(--red);text-transform:uppercase}
+.eyebrow::before{content:"";width:22px;height:3px;background:var(--red);box-shadow:0 6px 0 var(--red)}
+.big{font-size:clamp(44px,7vw,92px);line-height:.95;margin:8px 0 12px}
+.sub{color:var(--muted);font-size:14px;max-width:640px}
+.row-title{font-size:clamp(20px,2vw,24px);font-weight:700;margin-bottom:12px}
+.row{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:14px clamp(16px,4vw,56px) 26px;scrollbar-width:none}
+.row::-webkit-scrollbar{display:none}
+.row > *{scroll-snap-align:start;flex:0 0 auto}
+
+/* continue exploring */
+.ep{position:relative;width:clamp(240px,24vw,320px);aspect-ratio:16/9;border-radius:6px;overflow:hidden;cursor:pointer;transition:transform .3s;display:block}
+.ep:hover{transform:scale(1.06);z-index:2}
+.ep .bgx{position:absolute;inset:0}
+.ep .lbl{position:absolute;left:14px;bottom:20px;right:14px}
+.ep .lbl small{font:800 10px Inter;letter-spacing:.2em;color:#ffffffb0}
+.ep .lbl h3{font-size:clamp(30px,3vw,40px);line-height:.9}
+.ep .lbl p{font-size:12px;color:#ffffffc0;margin-top:2px}
+.ep .pl{position:absolute;right:12px;top:12px;width:34px;height:34px;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;background:#0006}
+.ep .bar{position:absolute;left:0;right:0;bottom:0;height:4px;background:#ffffff40}.ep .bar i{display:block;height:100%;background:var(--red)}
+.g1{background:linear-gradient(135deg,#e50914,#5c0a10)}.g2{background:linear-gradient(135deg,#6b3df5,#1d0d55)}.g3{background:linear-gradient(135deg,#f5a623,#6b3a05)}.g4{background:linear-gradient(135deg,#17a34a,#06361a)}.g5{background:linear-gradient(135deg,#1e88e5,#0a2b55)}
+.ep .bgx::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,#ffffff0a 0 2px,transparent 2px 14px)}
+
+/* full story / about */
+.about{display:grid;grid-template-columns:minmax(260px,420px) 1fr;gap:clamp(20px,4vw,50px);align-items:stretch}
+.poster{position:relative;border-radius:10px;overflow:hidden;background:radial-gradient(80% 70% at 50% 30%,#5c1420,#1a0a0e);min-height:420px}
+.poster img{position:absolute;bottom:0;left:50%;transform:translateX(-50%);height:96%}
+.poster .cap{position:absolute;left:0;right:0;bottom:0;padding:18px;background:linear-gradient(transparent,#000d)}
+.poster .cap small{font:800 10px Inter;letter-spacing:.24em;color:var(--red)}
+.poster .cap h3{font-size:32px;line-height:1}
+.poster .age{position:absolute;right:12px;top:12px;font:800 11px Inter;background:#000a;border:1px solid #fff6;padding:3px 8px;border-radius:3px}
+.det .quote{font-family:Georgia,serif;font-style:italic;font-size:clamp(20px,2.2vw,28px);line-height:1.35;color:#eee}
+.det .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px 30px;margin-top:26px}
+.det h4{font:800 10.5px Inter;letter-spacing:.22em;color:var(--dim);text-transform:uppercase;margin-bottom:6px}
+.det .grid p{font-size:14px;color:#ddd;line-height:1.5}
+.det .grid p b{color:#fff}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.tags span{font-size:12px;padding:4px 10px;border-radius:99px;background:#26262e;border:1px solid #33333d;color:#ddd}
+@media(max-width:760px){.about{grid-template-columns:1fr}.det .grid{grid-template-columns:1fr}}
+
+/* top moments */
+.award{width:clamp(200px,18vw,240px);min-height:320px;border-radius:8px;position:relative;overflow:hidden;padding:18px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;
+  background:radial-gradient(90% 60% at 50% 0%,#3b2f12,#141109 75%);border:1px solid #6b5520;transition:.3s}
+.award:hover{transform:translateY(-6px);border-color:var(--gold);box-shadow:0 18px 40px #d8b25a33}
+.award svg{position:absolute;top:34px;left:6%;width:88%}
+.award .k{position:relative;font:800 9px Inter;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;margin-top:58px;max-width:58%}
+.award h3{position:relative;font-size:clamp(24px,2.1vw,28px);line-height:.95;margin-top:8px;color:#fff;max-width:64%}
+.award .w{position:relative;max-width:66%}
+.award .w{font:800 10px Inter;letter-spacing:.14em;color:var(--gold);margin-top:6px;text-transform:uppercase}
+.award p{font-size:12px;color:#cfc6ae;margin-top:auto;line-height:1.4}
+
+/* skills universe */
+.uni{display:grid;grid-template-columns:260px 1fr;gap:26px;margin-top:22px}
+.cats{display:flex;flex-direction:column;gap:6px}
+.cat{background:none;border:0;border-left:3px solid transparent;color:var(--dim);text-align:left;padding:10px 14px;cursor:pointer;transition:.2s;border-radius:0 6px 6px 0}
+.cat b{display:block;font:400 26px/1 'Bebas Neue';letter-spacing:.02em}
+.cat small{font-size:11.5px}
+.cat.on,.cat:hover{color:#fff;background:#1c1c22}.cat.on{border-left-color:var(--red)}
+.skillpane h4{font-size:14px;color:var(--muted);margin-bottom:12px}.skillpane h4 b{color:#fff}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.sk{position:relative;border-radius:8px;padding:16px 14px 14px;background:linear-gradient(160deg,#25252d,#17171c);border:1px solid #2c2c35;min-height:118px;overflow:hidden;animation:fin .4s ease both}
+.sk:nth-child(2){animation-delay:.04s}.sk:nth-child(3){animation-delay:.08s}.sk:nth-child(4){animation-delay:.12s}.sk:nth-child(5){animation-delay:.16s}.sk:nth-child(6){animation-delay:.2s}.sk:nth-child(7){animation-delay:.24s}
+@keyframes fin{from{opacity:0;transform:translateY(10px)}}
+.sk .n{position:absolute;top:10px;left:12px;font:400 26px 'Bebas Neue';color:var(--red)}
+.sk.lead{background:linear-gradient(160deg,#7a0a12,#2a0609);border-color:#a30d17}
+.sk h5{font-size:17px;margin-top:30px}
+.sk p{font-size:11.5px;color:var(--muted);margin-top:2px}
+.sk .badge{position:absolute;top:12px;right:10px;font:800 9px Inter;letter-spacing:.08em;background:var(--red);padding:2px 6px;border-radius:3px}
+@media(max-width:760px){.uni{grid-template-columns:1fr}.cats{flex-direction:row;overflow-x:auto;scrollbar-width:none}.cat{flex:0 0 auto;border-left:0;border-bottom:3px solid transparent;border-radius:6px 6px 0 0}.cat.on{border-bottom-color:var(--red)}.cat small{display:none}}
+
+/* originals */
+.orig{position:relative;width:clamp(260px,30vw,400px);aspect-ratio:2/3;border-radius:8px;overflow:hidden;cursor:pointer;transition:.3s}
+.orig:hover{transform:scale(1.03)}
+.orig .art{position:absolute;inset:0}
+.orig .o-tag{position:absolute;top:14px;left:14px;display:flex;align-items:center;gap:6px;font:800 10px Inter;letter-spacing:.2em}
+.orig .o-tag i{font:400 22px 'Bebas Neue';color:var(--red);font-style:normal;letter-spacing:0}
+.orig .new{position:absolute;top:14px;right:14px;font:800 10px Inter;background:var(--red);padding:3px 8px;border-radius:3px}
+.orig .o-body{position:absolute;left:0;right:0;bottom:0;padding:20px;background:linear-gradient(transparent,#000e 40%)}
+.orig h3{font-size:clamp(40px,4vw,56px);line-height:.88}
+.orig .gen{font:700 11px Inter;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin:8px 0}
+.orig p{font-size:13px;color:#ddd;line-height:1.45}
+.orig .tags{margin-top:10px}
+
+/* journey episodes */
+.eps{display:grid;gap:2px;margin-top:20px;max-width:1000px}
+.epi{display:grid;grid-template-columns:40px 170px 1fr;gap:20px;align-items:center;padding:20px;border-radius:6px;border-bottom:1px solid #26262e;transition:.2s}
+.epi{cursor:pointer;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;color:inherit;font:inherit}
+.epi:hover,.epi:focus-visible{background:#1c1c22;outline:none}
+.epi .th .pl{position:absolute;width:40px;height:40px;border-radius:50%;border:2px solid #fff;background:#0008;display:grid;place-items:center;font-size:14px;opacity:0;transition:.2s}
+.epi:hover .th .pl,.epi:focus-visible .th .pl{opacity:1}
+.epi .more{display:inline-block;margin-top:8px;font:700 11px Inter;letter-spacing:.12em;color:#fff;opacity:.75}
+#epModal{position:fixed;inset:0;z-index:85;background:#000c;display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:40px 12px}
+#epModal.open{display:flex}
+.epbox{width:min(720px,100%);background:#181818;border-radius:10px;overflow:hidden;animation:fin .3s ease}
+.ephead{position:relative;height:clamp(170px,30vw,240px);display:flex;align-items:flex-end;padding:22px clamp(16px,4vw,34px)}
+.ephead::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 30%,#181818);pointer-events:none}
+.ephead .big{position:absolute;right:20px;top:10px;font:400 clamp(70px,14vw,120px)/1 'Bebas Neue';color:#ffffff22}
+.ephead div{position:relative;z-index:2}
+.ephead small{font:800 11px Inter;letter-spacing:.2em;color:#fffc}
+.ephead h3{font:400 clamp(36px,6vw,54px)/.95 'Bebas Neue';margin-top:4px}
+.epbody{padding:6px clamp(16px,4vw,34px) 30px}
+.epbody .meta{margin-bottom:14px}
+.epbody p{font-size:14.5px;line-height:1.6;color:#ddd}
+.epbody ul{list-style:none;display:grid;gap:8px;margin-top:14px}
+.epbody li{font-size:14px;color:#ccc;padding-left:16px;position:relative;line-height:1.5}
+.epbody li::before{content:"";position:absolute;left:0;top:.6em;width:6px;height:6px;background:var(--red);border-radius:1px}
+.epbody .tags{margin-top:16px}
+.epnav{display:flex;justify-content:space-between;gap:10px;margin-top:22px;flex-wrap:wrap}
+.epnav button,.epnav a{font:700 13px Inter;padding:10px 16px;border-radius:5px;border:0;cursor:pointer;background:#2b2b31;color:#fff}
+.epnav .p{background:#fff;color:#000}
+.epi .no{font-size:26px;color:var(--muted);text-align:center;font-weight:500}
+.epi .th{aspect-ratio:16/9;border-radius:5px;position:relative;overflow:hidden;display:grid;place-items:center}
+.epi .th span{font:400 30px 'Bebas Neue';color:#fffd}
+.epi h4{font-size:16px;display:flex;justify-content:space-between;gap:10px}
+.epi h4 em{font-style:normal;font-weight:500;color:var(--muted);font-size:13px;white-space:nowrap}
+.epi p{font-size:13.5px;color:#bbb;margin-top:6px;line-height:1.5}
+.epi.soon{opacity:.75}.epi.soon .th{border:2px dashed #555;background:#141418}
+@media(max-width:700px){.epi{grid-template-columns:1fr;gap:10px}.epi .no{display:none}.epi .th{max-width:220px}}
+
+/* top picks */
+.pick{position:relative;display:flex;align-items:flex-end;width:clamp(230px,22vw,290px);height:clamp(200px,20vw,250px)}
+.pick .num{font:400 clamp(190px,19vw,250px)/.8 'Bebas Neue';color:var(--bg);-webkit-text-stroke:4px #595963;margin-right:-30px;position:relative;z-index:0}
+.pick .pc{position:relative;z-index:1;width:56%;aspect-ratio:2/3;border-radius:5px;overflow:hidden;padding:10px;display:flex;flex-direction:column;justify-content:space-between;transition:.3s}
+.pick:hover .pc{transform:translateY(-6px)}
+.pick .pc small{font:800 8.5px Inter;letter-spacing:.18em;opacity:.85}
+.pick .pc b{font:400 26px/.9 'Bebas Neue'}
+.pick .pc p{font-size:10px;opacity:.85}
+.pick .pc i{position:absolute;top:8px;right:8px;font:400 18px 'Bebas Neue';color:var(--red);font-style:normal}
+
+/* finale */
+.finale{min-height:90svh;display:grid;place-items:center;text-align:center;padding:80px 16px;background:radial-gradient(60% 60% at 50% 60%,#3a0a14,var(--bg) 70%)}
+.finale .eyebrow{justify-content:center}.finale .eyebrow::before{display:none}
+.finale h2{font-size:clamp(60px,12vw,170px);line-height:.85;margin:14px 0 26px;background:linear-gradient(180deg,#fff,#b9a3a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.finale .who{font:800 clamp(16px,2vw,22px) Inter;letter-spacing:.24em}
+.finale .rl{font:600 12px Inter;letter-spacing:.3em;color:var(--muted);margin-top:6px}
+.finale .cta{justify-content:center}
+.finale .mail{display:block;margin-top:20px;color:var(--muted);font-size:14px;word-break:break-all}
+footer{text-align:center;color:var(--dim);font-size:12px;padding:20px 16px 40px}
+@media(max-width:480px){.hero h1{font-size:16vw}#intro .logo h1{font-size:15vw}}
+
+/* modal */
+#modal{position:fixed;inset:0;z-index:80;background:#000b;display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:40px 12px}
+#modal.open{display:flex}
+.mbox{width:min(860px,100%);background:#181818;border-radius:10px;overflow:hidden;animation:fin .3s ease}
+.mhead{position:relative;height:clamp(240px,40vw,380px);background:radial-gradient(70% 90% at 75% 40%,#5c1420,#181818 75%)}
+.mhead img{position:absolute;right:4%;bottom:0;height:100%;-webkit-mask-image:linear-gradient(0deg,transparent,#000 30%);mask-image:linear-gradient(0deg,transparent,#000 30%)}
+.mhead::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 55%,#181818)}
+.mhead .t{position:absolute;left:clamp(16px,4vw,40px);bottom:24px;z-index:2}
+.mhead .t h2{font-size:clamp(40px,7vw,72px);line-height:.88}
+.mclose{position:absolute;right:14px;top:14px;z-index:3;width:38px;height:38px;border-radius:50%;border:0;background:#181818;color:#fff;font-size:20px;cursor:pointer}
+.mbody{padding:10px clamp(16px,4vw,40px) 34px;display:grid;grid-template-columns:1.6fr 1fr;gap:28px}
+.mbody p{font-size:14.5px;line-height:1.6;color:#ddd}
+.mbody .side{font-size:13px;color:var(--muted);line-height:1.7}.mbody .side b{color:#ddd;font-weight:500}
+.mbody h3{grid-column:1/-1;font-size:20px;margin-top:6px}
+.mbody ul{grid-column:1/-1;list-style:none;display:grid;gap:8px}
+.mbody li{font-size:14px;color:#ccc;padding-left:16px;position:relative;line-height:1.5}
+.mbody li::before{content:"";position:absolute;left:0;top:.6em;width:6px;height:6px;background:var(--red);border-radius:1px}
+.mbody .job{grid-column:1/-1;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid #333;padding-top:14px;font-weight:700}
+.mbody .job em{font-style:normal;color:var(--muted);font-weight:500;font-size:13px}
+@media(max-width:700px){.mbody{grid-template-columns:1fr}}
+
+.fade{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}
+.fade.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.fade{opacity:1;transform:none}}
+</style>
+</head>
+<body class="locked">
+
+<!-- INTRO -->
+<div id="intro"><div class="glow"></div><div class="logo"><h1 class="disp">SAI NARASIMHA<br>BOMMISETTY</h1><span>THE SERIES</span></div></div>
+
+<!-- WHO'S WATCHING -->
+<div id="who" class="hide">
+  <div>
+    <h2>Who's watching?</h2>
+    <div class="profiles">
+      <button class="prof" data-go="#top"><div class="tile t1"><img src="photo.webp" alt="" style="object-position:50% 0;transform:scale(1.02)"><span class="main">MAIN</span></div><b>Sai</b><small>The full series, in order</small></button>
+      <button class="prof" data-go="#story"><div class="tile t2">R</div><b>Recruiter</b><small>Résumé, experience & contact</small></button>
+      <button class="prof" data-go="#skills"><div class="tile t3">&lt;/&gt;</div><b>Developer</b><small>Stack, skills & projects</small></button>
+      <button class="prof" data-go="#journey"><div class="tile t4">✦</div><b>Explorer</b><small>The story & highlights</small></button>
+    </div>
+    <div class="who-note">Pick a profile to start watching</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#top" class="brand disp">S<small>SERIES</small></a>
+  <ul>
+    <li><a href="#top" class="on">Home</a></li><li><a href="#story">Résumé</a></li><li><a href="#moments">Moments</a></li><li><a href="#skills">Skills</a></li><li><a href="#originals">Originals</a></li><li><a href="#journey">Journey</a></li><li><a href="#picks">Top Picks</a></li>
+  </ul>
+  <div class="right"><span>LET'S BUILD</span><img src="photo.webp" alt="Switch profile" id="switchProf" title="Switch profile"></div>
+</nav>
+
+<!-- HERO -->
+<header class="hero" id="top">
+  <img class="pic" src="photo.webp" alt="Sai Narasimha Bommisetty">
+  <div class="info">
+    <div class="series-tag"><i>S</i>SERIES</div>
+    <h1 class="disp">SAI NARASIMHA<br>BOMMISETTY</h1>
+    <div class="ts">THE SERIES</div>
+    <div class="top10"><b>TOP<br>10</b>#1 in Portfolios on this page today</div>
+    <div class="meta"><span class="match">98% Match</span><span>2021 – Present</span><span class="box">SDE</span><span>MSc CS</span><span>2 Originals</span><span class="hd">HD</span></div>
+    <div class="genre">Full-stack developer · Java · Spring Boot · React · AWS</div>
+    <p class="syn">A Software Development Engineer with 2+ years building enterprise backends at Capgemini and an MSc in Computer Science (Distinction). He ships REST APIs, automates the tests and owns production after go-live. Now based in Birmingham and looking for his next role.</p>
+    <div class="cta">
+      <a class="btn play" href="#journey"><svg viewBox="0 0 24 24"><path d="M6 4l15 8-15 8z" fill="currentColor"/></svg>Play</a>
+      <button class="btn more" id="openModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.5"/></svg>View Résumé</button>
+    </div>
+  </div>
+  <div class="rating">16+ &nbsp;·&nbsp; Ownership, testing, clean code</div>
+</header>
+
+<!-- CONTINUE EXPLORING -->
+<section>
+  <div class="wrap"><div class="row-title">Continue Exploring</div></div>
+  <div class="row">
+    <a class="ep" href="#originals"><div class="bgx g1"></div><div class="pl">▶</div><div class="lbl"><small>EPISODE 01</small><h3 class="disp">My Projects</h3><p>2 originals in production</p></div><div class="bar"><i style="width:70%"></i></div></a>
+    <a class="ep" href="#story"><div class="bgx g2"></div><div class="pl">▶</div><div class="lbl"><small>EPISODE 02</small><h3 class="disp">About Me</h3><p>The pilot: education & work</p></div><div class="bar"><i style="width:40%"></i></div></a>
+    <a class="ep" href="#journey"><div class="bgx g3"></div><div class="pl">▶</div><div class="lbl"><small>EPISODE 03</small><h3 class="disp">My Journey</h3><p>2016 → today</p></div><div class="bar"><i style="width:85%"></i></div></a>
+    <a class="ep" href="#skills"><div class="bgx g4"></div><div class="pl">▶</div><div class="lbl"><small>EPISODE 04</small><h3 class="disp">My Skills</h3><p>The skill universe</p></div><div class="bar"><i style="width:55%"></i></div></a>
+    <a class="ep" href="#picks"><div class="bgx g5"></div><div class="pl">▶</div><div class="lbl"><small>EPISODE 05</small><h3 class="disp">Top Picks</h3><p>Sai's top 5 tools</p></div><div class="bar"><i style="width:25%"></i></div></a>
+  </div>
+</section>
+
+<!-- THE FULL STORY -->
+<section id="story">
+  <div class="wrap">
+    <div class="eyebrow">The Synopsis</div>
+    <h2 class="big disp fade">The Full Story</h2>
+    <div class="about fade" style="margin-top:22px">
+      <div class="poster"><img src="photo.webp" alt="Sai"><span class="age">MSc · DISTINCTION</span><div class="cap"><small>STARRING</small><h3 class="disp">Sai Narasimha Bommisetty</h3></div></div>
+      <div class="det">
+        <p class="quote">"A Software Development Engineer with 2+ years building and supporting enterprise applications in Java, J2EE, Spring Boot and Python, who cares about clean code, solid testing and owning what he ships after it goes live."</p>
+        <div class="grid">
+          <div><h4>Now</h4><p><b>MSc Computer Science</b><br>Birmingham City University · Distinction</p></div>
+          <div><h4>Previously</h4><p><b>Associate Software Engineer II</b><br>Capgemini, Delhi · 2021 – 2023</p></div>
+          <div><h4>Primary languages</h4><p><b>Java</b>, with Python, SQL and TypeScript</p></div>
+          <div><h4>Currently</h4><p><b>ICQA Associate</b>, Amazon Fulfilment Centre, UK<br>Improved the team's force pick script, now used team-wide</p></div>
+          <div style="grid-column:1/-1"><h4>Genres</h4><div class="tags"><span>Backend & REST APIs</span><span>Full-stack</span><span>Test automation</span><span>Cloud (AWS)</span><span>Security</span><span>AI-native development</span></div></div>
+        </div>
+        <div class="cta"><button class="btn play" id="openModal2">ⓘ&nbsp; Full résumé</button><a class="btn more" href="#finale">Contact</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOP MOMENTS -->
+<section id="moments">
+  <div class="wrap"><div class="eyebrow">Awards Season</div><h2 class="big disp fade">Top Moments</h2></div>
+  <div class="row" id="awards"></div>
+</section>
+
+<!-- SKILL UNIVERSE -->
+<section id="skills">
+  <div class="wrap">
+    <div class="eyebrow">Series</div>
+    <h2 class="big disp fade">My Skill Universe</h2>
+    <p class="sub">Click a category on the left. Java is the lead; the rest is the supporting cast.</p>
+    <div class="uni"><div class="cats" id="cats"></div><div class="skillpane"><h4 id="paneTitle"></h4><div class="sgrid" id="sgrid"></div></div></div>
+  </div>
+</section>
+
+<!-- ORIGINALS -->
+<section id="originals">
+  <div class="wrap"><div class="eyebrow">2 Originals · 2026</div><h2 class="big disp fade">Originals</h2><p class="sub">Productions from the Sai studio, built from scratch.</p></div>
+  <div class="row">
+    <article class="orig"><div class="art" style="background:radial-gradient(70% 50% at 50% 30%,#ff4d5a,#7a0a12 55%,#1a0306)"><svg viewBox="0 0 200 300" style="position:absolute;inset:0;width:100%;height:100%;opacity:.35"><g fill="none" stroke="#fff" stroke-width="2"><rect x="40" y="50" width="120" height="120" rx="26"/><circle cx="100" cy="110" r="30"/><circle cx="138" cy="72" r="6" fill="#fff"/></g></svg></div>
+      <div class="o-tag"><i>S</i>ORIGINAL</div><span class="new">NEW</span>
+      <div class="o-body"><h3 class="disp">Lumen</h3><div class="gen">Social · Full-stack · Web + Mobile</div><p>A real multi-user photo and video sharing app with secure sign-up and login, a Spring Boot and PostgreSQL backend, and web and mobile clients.</p><div class="tags"><span>Java</span><span>Spring Boot</span><span>PostgreSQL</span><span>REST APIs</span></div></div></article>
+    <article class="orig"><div class="art" style="background:radial-gradient(70% 50% at 50% 30%,#8a5cff,#2b0f6b 55%,#0b0420)"><svg viewBox="0 0 200 300" style="position:absolute;inset:0;width:100%;height:100%;opacity:.35"><g fill="none" stroke="#fff" stroke-width="2"><rect x="30" y="60" width="140" height="90" rx="10"/><path d="M88 85 L120 105 L88 125Z" fill="#fff"/><path d="M40 175 h120 M40 190 h80"/><path d="M150 40 l6 12 12 6 -12 6 -6 12 -6 -12 -12 -6 12 -6z" fill="#fff"/></g></svg></div>
+      <div class="o-tag"><i>S</i>ORIGINAL</div><span class="new">IN PRODUCTION</span>
+      <div class="o-body"><h3 class="disp">AI Video<br>Platform</h3><div class="gen">GenAI · Web application</div><p>A web platform with an AI assistant that generates and transforms videos from user prompts, with GenAI services throughout.</p><div class="tags"><span>GenAI</span><span>AI assistant</span><span>Web</span></div></div></article>
+    <article class="orig"><div class="art" style="background:radial-gradient(70% 50% at 50% 30%,#2f80ed,#0b2a5c 55%,#03091a)"><svg viewBox="0 0 200 300" style="position:absolute;inset:0;width:100%;height:100%;opacity:.35"><g fill="none" stroke="#fff" stroke-width="2"><rect x="50" y="50" width="100" height="30" rx="4"/><rect x="50" y="95" width="100" height="30" rx="4"/><rect x="50" y="140" width="100" height="30" rx="4"/><path d="M100 80v15M100 125v15"/></g></svg></div>
+      <div class="o-tag"><i>S</i>LIMITED SERIES</div><span class="new">2021–23</span>
+      <div class="o-body"><h3 class="disp">Enterprise<br>APIs</h3><div class="gen">Backend · Capgemini</div><p>Scalable backend services and REST APIs in Java, J2EE and Spring Boot for enterprise clients, with optimised SQL, automated tests and secure auth.</p><div class="tags"><span>J2EE</span><span>Spring Boot</span><span>SQL</span><span>OAuth2/JWT</span></div></div></article>
+  </div>
+</section>
+
+<!-- JOURNEY -->
+<section id="journey">
+  <div class="wrap">
+    <div class="eyebrow">Season 1</div>
+    <h2 class="big disp fade">My Journey</h2>
+    <p class="sub">Every episode so far, plus the one coming next.</p>
+    <div class="eps" id="eps"></div>
+  </div>
+</section>
+
+<!-- TOP PICKS -->
+<section id="picks">
+  <div class="wrap"><div class="eyebrow">Top 5 in Sai's stack</div><h2 class="big disp fade">Sai's Top Picks</h2></div>
+  <div class="row" id="picksRow"></div>
+</section>
+
+<!-- FINALE -->
+<section class="finale" id="finale">
+  <div>
+    <div class="eyebrow">The Next Episode</div>
+    <h2 class="disp">To Be Continued...</h2>
+    <div class="who">SAI NARASIMHA BOMMISETTY</div>
+    <div class="rl">SOFTWARE DEVELOPMENT ENGINEER · BIRMINGHAM, UK</div>
+    <div class="cta" style="margin-top:28px">
+      <a class="btn play" href="mailto:bommisettysainarasimha934@gmail.com">✉&nbsp; Cast me in your team</a>
+      <a class="btn more" href="https://linkedin.com/in/sai-bommisetty" target="_blank" rel="noopener">LinkedIn ↗</a>
+    </div>
+    <a class="mail" href="mailto:bommisettysainarasimha934@gmail.com">bommisettysainarasimha934@gmail.com</a>
+  </div>
+</section>
+<footer>Sai Narasimha Bommisetty: The Series · A portfolio, not a streaming service · © 2026</footer>
+
+<!-- RESUME MODAL -->
+<div id="modal" role="dialog" aria-modal="true" aria-label="Résumé">
+  <div class="mbox">
+    <div class="mhead"><img src="photo.webp" alt=""><button class="mclose" id="closeModal" aria-label="Close">✕</button>
+      <div class="t"><div class="series-tag"><i>S</i>SERIES</div><h2 class="disp">SAI NARASIMHA<br>BOMMISETTY</h2><div class="meta" style="margin-top:8px"><span class="match">98% Match</span><span>2021 – Present</span><span class="box">SDE</span></div></div></div>
+    <div class="mbody">
+      <p>Software development engineer with 2+ years of professional experience building and supporting enterprise applications in Java, J2EE, Spring Boot and Python, plus an MSc in Computer Science from Birmingham City University. Designed backend services and REST APIs, wrote SQL for relational databases, built automated tests with Selenium and Robot Framework, and resolved production issues in a fast-moving Agile team. Uses AI-powered tools every day across design, coding, review and testing.</p>
+      <div class="side"><b>Cast:</b> Sai Narasimha Bommisetty<br><b>Location:</b> Birmingham, UK<br><b>Genres:</b> Backend, Full-stack, Cloud<br><b>Availability:</b> UK work eligible, no start-date restrictions<br><b>Contact:</b> bommisettysainarasimha934@gmail.com</div>
+      <div class="job">Associate Software Engineer II · Capgemini, Delhi <em>Aug 2021 – Jun 2023</em></div>
+      <ul>
+        <li>Designed and developed scalable backend services and REST APIs in Java, J2EE and Spring Boot for enterprise clients.</li>
+        <li>Wrote and optimised SQL queries and data models, improving speed and reliability of data-heavy features.</li>
+        <li>Built automated test suites with Selenium and Robot Framework, catching defects earlier and cutting manual effort.</li>
+        <li>Wrote Python scripts on Linux to automate build, data and testing tasks.</li>
+        <li>Developed front-end screens with React, TypeScript and HTML, integrated end to end with backend APIs.</li>
+        <li>Monitored and resolved production issues by tracing root causes from logs, sharing on-call style support.</li>
+        <li>Applied OAuth2, JWT and OWASP Top 10 practices to keep authentication and customer data secure.</li>
+        <li>Worked in an Agile team with CI/CD, sprint planning, stand-ups, code reviews and technical documentation.</li>
+      </ul>
+      <div class="job">ICQA Associate · Amazon Fulfilment Centre, UK <em>May 2026 – Present</em></div>
+      <ul>
+        <li>Improved the team's force pick script; my Area Manager credited the work and rolled it out to the whole ICQA team.</li>
+        <li>Inventory control and quality assurance checks in a high-volume operation, investigating discrepancies to find the root cause.</li>
+        <li>Work with Amazon systems and handheld devices every shift, seeing customer obsession at scale first-hand.</li>
+      </ul>
+      <div class="job">Process Guide, Shipping · Amazon Fulfilment Centre, UK <em>Oct 2025 – Apr 2026</em></div>
+      <ul>
+        <li>Guided truck loading and unloading to keep outbound shipments on track for CPTs (critical pull times).</li>
+        <li>Managed conveyor flow and manual induction to keep packages moving through the shipping department.</li>
+      </ul>
+      <div class="job">Education <em>&nbsp;</em></div>
+      <ul>
+        <li><b>MSc Computer Science</b>, Birmingham City University, 2024 – 2025 (Distinction)</li>
+        <li><b>BTech Computer Science and Engineering</b>, Sri Sai Institute of Technology and Science, India, 2016 – 2020</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div id="epModal" role="dialog" aria-modal="true" aria-label="Episode details">
+  <div class="epbox" style="position:relative"><button class="mclose" aria-label="Close">✕</button><div class="ephead" id="epHead"></div><div class="epbody" id="epBody"></div></div>
+</div>
+
+<script>
+/* ---------- data ---------- */
+const awards=[
+  ['Team Impact Award','Force Pick Script','Rolled out team-wide','Improved the ICQA force pick script, now rolled out to the whole team'],
+  ['Academic Honours','MSc','Distinction','Birmingham City University, 2024–2025'],
+  ['Career Debut','Capgemini','Associate SE II','2 years building enterprise Java backends'],
+  ['Best Supporting Role','Test Automation','Selenium · Robot','Caught defects earlier and cut manual testing effort'],
+  ['Production Award','Prod Support','On-call','Traced root causes from logs to keep services stable'],
+  ['Security Award','Secure by Default','OAuth2 · JWT','Protected authentication and customer data'],
+  ['Behind the Scenes','Amazon','ICQA Associate','Customer obsession at scale, first-hand']
+];
+const cats={
+  'Languages':{d:'Java is the primary language',s:[['Java','Primary · enterprise backends',1],['Python','Automation scripts on Linux'],['SQL','Queries & optimisation'],['JavaScript','Web front-ends'],['TypeScript','Typed React apps'],['HTML / CSS','UI building blocks']]},
+  'Backend':{d:'Server-side logic and APIs',s:[['Spring Boot','REST services',1],['J2EE','Enterprise Java'],['Spring MVC','Web layer'],['Hibernate / JPA','ORM & persistence'],['REST APIs','Design & integration'],['Microservices','Service architecture']]},
+  'Frontend':{d:'Interfaces & web platform',s:[['React','Component UIs',1],['TypeScript','Type-safe front-end'],['HTML / CSS','Layouts & styling'],['API integration','End-to-end features']]},
+  'Cloud & Infra':{d:'Running things reliably',s:[['AWS','Cloud-native services',1],['Distributed systems','Scale & resilience'],['Fault tolerance','Designing for failure'],['Monitoring & logging','Prod observability'],['Linux','Daily driver'],['CI/CD','Automated pipelines']]},
+  'Databases':{d:'Relational data',s:[['PostgreSQL','Lumen backend',1],['MySQL','Relational DB'],['Data modelling','Schemas & relations'],['Query optimisation','Faster data features']]},
+  'Testing':{d:'Quality built in',s:[['JUnit','Unit tests',1],['Selenium','Web automation'],['Robot Framework','Acceptance tests'],['Integration testing','Service-level'],['Regression testing','Safe releases']]},
+  'Security':{d:'Secure by default',s:[['OAuth2','Authorisation',1],['JWT','Token auth'],['OWASP Top 10','Web security'],['Design patterns','Maintainable code'],['OOD','Object-oriented design']]},
+  'AI & Ways of Working':{d:'How the work gets done',s:[['AI coding tools','Design, code, review, test',1],['GenAI','AI video platform'],['Agile / Scrum','Sprints & stand-ups'],['Code reviews','Quality gate'],['Git & Jira','Team tooling'],['On-call','Ownership after go-live']]}
+};
+const eps=[
+  ['S1:E1','The Foundation','2016 – 2020','BTech in Computer Science and Engineering at Sri Sai Institute of Technology and Science, India. Where the code started.','g5'],
+  ['S1:E2','Enter Capgemini','Aug 2021 – Jun 2023','Associate Software Engineer II in Delhi. REST APIs in Java and Spring Boot, SQL tuning, Selenium and Robot Framework automation, React screens and production support in an Agile team.','g1'],
+  ['S1:E3','The Birmingham Arc','2024 – 2025','MSc Computer Science at Birmingham City University, graduating with Distinction.','g2'],
+  ['S1:E4','Inside Amazon','Oct 2025 – Present','Process Guide in Shipping (Oct 2025 – Apr 2026), then ICQA Associate (May 2026 – now) at an Amazon Fulfilment Centre. Improved the team\'s force pick script, which my Area Manager rolled out to the whole team.','g3'],
+  ['S1:E5','The Next Role','Coming soon','Sai joins a new team as a Software Development Engineer. Could it be yours?','soon']
+];
+const epDetail=[
+  {intro:'Where the code started: a four-year degree in Computer Science and Engineering in India.',pts:['BTech, Computer Science and Engineering','Sri Sai Institute of Technology and Science, India','2016 – 2020'],tags:['Computer Science','Engineering']},
+  {intro:'Associate Software Engineer II at Capgemini in Delhi, building and supporting enterprise applications.',pts:['Designed and developed scalable backend services and REST APIs in Java, J2EE and Spring Boot for enterprise clients.','Wrote and optimised SQL queries and data models, improving the speed and reliability of data-heavy features.','Built automated test suites with Selenium and Robot Framework, catching defects earlier and cutting manual effort.','Wrote Python scripts on Linux to automate build, data and testing tasks.','Developed front-end screens with React, TypeScript and HTML, integrated end to end with backend APIs.','Monitored and resolved production issues by tracing root causes from logs, sharing on-call style support.','Applied OAuth2, JWT and OWASP Top 10 practices to keep authentication and customer data secure.','Worked in an Agile team with CI/CD, sprint planning, stand-ups, code reviews and documentation.'],tags:['Java','Spring Boot','SQL','Selenium','React','OAuth2/JWT']},
+  {intro:'Moved to the UK for a Master\'s degree at Birmingham City University.',pts:['MSc Computer Science','Birmingham City University, Birmingham, UK','Graduated with Distinction','2024 – 2025'],tags:['Computer Science','Distinction']},
+  {intro:'Two roles at an Amazon Fulfilment Centre in the UK: Process Guide in Shipping (Oct 2025 – Apr 2026), then ICQA Associate (May 2026 – present), while building my own software on the side.',pts:['ICQA: improved the team\'s force pick script; my Area Manager credited the work and rolled it out to the whole ICQA team.','Shipping (Process Guide): guided truck loading and unloading to hit CPTs, and managed conveyor flow and manual induction.','Inventory control and quality assurance checks in a high-volume operation, investigating discrepancies to find the root cause.','Work with Amazon systems and handheld devices every shift, seeing customer obsession at scale first-hand.','Building Lumen (Spring Boot + PostgreSQL social app) and an AI video generation platform in my own time.'],tags:['Automation','Root-cause analysis','Amazon systems','Side projects']},
+  {intro:'The next episode is still being written. I\'m looking for a Software Development Engineer role on a team that ships.',pts:['Java · Spring Boot · React · AWS','Based in Birmingham, eligible to work in the UK','No restrictions on start date; open to on-site, hybrid and on-call roles'],tags:['Open to SDE roles'],cta:true}
+];
+const picks=[['Java','Language','The lead role','#7a0a12'],['Spring Boot','Framework','APIs at scale','#5c1a7a'],['React','Frontend','UIs end to end','#0b4f7a'],['AWS','Cloud','Cloud-native','#7a4a05'],['PostgreSQL','Database','Lumen\'s backbone','#0b5c3a']];
+
+/* ---------- render ---------- */
+const laurel=`<svg viewBox="0 0 200 140"><g fill="none" stroke="#d8b25a" stroke-width="3" stroke-linecap="round"><path d="M60 125 C25 105 18 60 36 22"/><path d="M140 125 C175 105 182 60 164 22"/></g><g fill="#d8b25a">${[0,1,2,3,4,5].map(i=>{const y=110-i*16,x=50-i*3+(i>3?i*2:0);return `<ellipse cx="${x-8}" cy="${y}" rx="11" ry="5" transform="rotate(${-40+i*10} ${x-8} ${y})"/><ellipse cx="${208-x}" cy="${y}" rx="11" ry="5" transform="rotate(${40-i*10} ${208-x} ${y})"/>`}).join('')}</g></svg>`;
+document.getElementById('awards').innerHTML=awards.map(a=>`<div class="award">${laurel}<div class="k">${a[0]}</div><h3 class="disp">${a[1]}</h3><div class="w">${a[2]}</div><p>${a[3]}</p></div>`).join('');
+
+const catsEl=document.getElementById('cats'),sg=document.getElementById('sgrid'),pt=document.getElementById('paneTitle');
+function showCat(k){
+  [...catsEl.children].forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+  pt.innerHTML=`<b>${k}</b> · ${cats[k].d}`;
+  sg.innerHTML=cats[k].s.map(s=>`<div class="sk ${s[2]?'lead':''}"><span class="n">S</span>${s[2]?'<span class="badge">LEAD</span>':''}<h5>${s[0]}</h5><p>${s[1]}</p></div>`).join('');
+}
+catsEl.innerHTML=Object.keys(cats).map(k=>`<button class="cat" data-k="${k}"><b>${k}</b><small>${cats[k].s.length} skills · ${cats[k].d}</small></button>`).join('');
+catsEl.onclick=e=>{const b=e.target.closest('.cat');if(b)showCat(b.dataset.k);};
+showCat('Languages');
+
+document.getElementById('eps').innerHTML=eps.map((e,i)=>`<button type="button" class="epi fade ${e[4]==='soon'?'soon':''}" data-ep="${i}"><div class="no">${i+1}</div><div class="th ${e[4]!=='soon'?e[4]:''}"><span>${e[0]}</span><i class="pl">▶</i></div><div><h4>${e[1]} <em>${e[2]}</em></h4><p>${e[3]}</p><span class="more">VIEW EPISODE ›</span></div></button>`).join('');
+const epModal=document.getElementById('epModal');let curEp=0;
+function openEp(i){curEp=i;const e=eps[i],d=epDetail[i];
+  const bg=e[4]==='soon'?'linear-gradient(135deg,#333,#141418)':getComputedStyle(document.querySelector('.th.'+e[4])||document.body).backgroundImage;
+  document.getElementById('epHead').style.background=bg;
+  document.getElementById('epHead').innerHTML=`<span class="big">${e[0]}</span><div><small>${e[0]} · SEASON 1</small><h3>${e[1]}</h3></div>`;
+  document.getElementById('epBody').innerHTML=`<div class="meta"><span class="match">${e[2]}</span><span class="hd">HD</span></div><p>${d.intro}</p><ul>${d.pts.map(x=>`<li>${x}</li>`).join('')}</ul><div class="tags">${d.tags.map(t=>`<span>${t}</span>`).join('')}</div>
+    <div class="epnav">${i>0?`<button data-go="-1">‹ Previous episode</button>`:'<span></span>'}${d.cta?`<a class="p" href="mailto:bommisettysainarasimha934@gmail.com">✉ Cast me in your team</a>`:`<button class="p" data-go="1">Next episode ›</button>`}</div>`;
+  epModal.classList.add('open');document.body.style.overflow='hidden';epModal.scrollTop=0;}
+function closeEp(){epModal.classList.remove('open');document.body.style.overflow='';}
+document.getElementById('eps').addEventListener('click',ev=>{const b=ev.target.closest('.epi');if(b)openEp(+b.dataset.ep);});
+epModal.addEventListener('click',ev=>{if(ev.target===epModal||ev.target.closest('.mclose'))return closeEp();const g=ev.target.closest('[data-go]');if(g)openEp(curEp+ +g.dataset.go);});
+addEventListener('keydown',ev=>{if(ev.key==='Escape')closeEp();});
+document.getElementById('picksRow').innerHTML=picks.map((p,i)=>`<div class="pick"><span class="num">${i+1}</span><div class="pc" style="background:linear-gradient(170deg,${p[3]},#0b0b0f)"><i>S</i><small>${p[1].toUpperCase()}</small><div><b>${p[0]}</b><p>${p[2]}</p></div></div></div>`).join('');
+
+/* ---------- fit the long name to its box ---------- */
+function fitName(el){
+  if(!el)return;el.style.whiteSpace='nowrap';el.style.display='block';el.style.maxWidth='100%';el.style.fontSize='';
+  let size=parseFloat(getComputedStyle(el).fontSize);
+  while(el.scrollWidth>el.clientWidth+1&&size>24){size-=2;el.style.fontSize=size+'px';}
+}
+function fitAll(){document.querySelectorAll('.hero h1,#intro .logo h1,.mhead .t h2').forEach(fitName);}
+fitAll();(document.fonts&&document.fonts.ready||Promise.resolve()).then(fitAll);addEventListener('resize',fitAll);
+document.getElementById('openModal').addEventListener('click',()=>setTimeout(fitAll,30));
+document.getElementById('openModal2').addEventListener('click',()=>setTimeout(fitAll,30));
+
+/* ---------- intro → who's watching ---------- */
+const intro=document.getElementById('intro'),who=document.getElementById('who');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+setTimeout(()=>{intro.classList.add('hide');who.classList.remove('hide');},reduce?300:2500);
+who.addEventListener('click',e=>{const p=e.target.closest('.prof');if(!p)return;
+  who.classList.add('hide');document.body.classList.remove('locked');
+  const t=document.querySelector(p.dataset.go);setTimeout(()=>t.scrollIntoView({behavior:'smooth'}),p.dataset.go==='#top'?0:400);});
+document.getElementById('switchProf').onclick=()=>{who.classList.remove('hide');document.body.classList.add('locked');};
+
+/* ---------- nav + modal + reveal ---------- */
+const nav=document.getElementById('nav');
+addEventListener('scroll',()=>nav.classList.toggle('solid',scrollY>60),{passive:true});
+const links=[...document.querySelectorAll('nav ul a')];
+const so=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id));}}),{rootMargin:'-45% 0px -50% 0px'});
+document.querySelectorAll('header[id],section[id]').forEach(s=>so.observe(s));
+const modal=document.getElementById('modal');
+const openM=()=>{modal.classList.add('open');document.body.style.overflow='hidden';};
+const closeM=()=>{modal.classList.remove('open');document.body.style.overflow='';};
+document.getElementById('openModal').onclick=openM;document.getElementById('openModal2').onclick=openM;
+document.getElementById('closeModal').onclick=closeM;
+modal.addEventListener('click',e=>{if(e.target===modal)closeM();});
+addEventListener('keydown',e=>{if(e.key==='Escape')closeM();});
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
+document.querySelectorAll('.fade').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
