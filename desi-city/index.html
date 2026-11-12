@@ -430,7 +430,7 @@ const cam={x:0,y:0,z:0.5};
 let VW=innerWidth,VH=innerHeight,DPR=1,night=0,gameTime=600,tsec=0;
 const isMobile=/iPhone|iPad|Android|Mobile/i.test(navigator.userAgent)||matchMedia('(pointer:coarse)').matches;
 let QUAL=isMobile?1:2;let RETRO=true;try{RETRO=localStorage.getItem('desicity_retro')!=='0'}catch(e){}
-try{const q=localStorage.getItem('desicity_q');if(q!==null)QUAL=+q;if(!localStorage.getItem('desicity_ultra1')){localStorage.setItem('desicity_ultra1','1');QUAL=3;localStorage.setItem('desicity_q','3')}}catch(e){}
+try{const q=localStorage.getItem('desicity_q');if(q!==null)QUAL=+q;if(!localStorage.getItem('desicity_ultra1')){localStorage.setItem('desicity_ultra1','1');QUAL=isMobile?1:3;localStorage.setItem('desicity_q',String(QUAL))}if(isMobile&&!localStorage.getItem('desicity_qset')&&!localStorage.getItem('desicity_mob1')){localStorage.setItem('desicity_mob1','1');QUAL=Math.min(QUAL,1);localStorage.setItem('desicity_q',String(QUAL))}}catch(e){}
 let renderer;
 try{renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'})}catch(e){document.body.innerHTML='<div style="padding:30px;color:#fff;font-family:sans-serif">Sorry, 3D (WebGL) is not available on this device.</div>';throw e}
 renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.0;
@@ -463,7 +463,7 @@ function ultraSky(dl){WIND.t.value=tsec;const on=QUAL===3&&!INT.active;ultraExtr
   const wet=Math.max(SEASON.rain||0,(SEASON.snow||0)*.8),show=dl>.18&&wet<.5;skyP.visible=show;sky.visible=!show;skyP.position.copy(camera.position);
   const sd=skyU.sunDir.value;skyP.material.uniforms.sunPosition.value.copy(sd);skyP.material.uniforms.turbidity.value=4.5+wet*8;
   // refresh sky reflections when the sun has moved
-  if(show&&(envSun.distanceToSquared(sd)>.0025||tsec-envT>30)){envSun.copy(sd);envT=tsec;envSky.material.uniforms.sunPosition.value.copy(sd);const old=envRT;envRT=pmremU.fromScene(envScene,0,.1,1000);scene.environment=envRT.texture;if(old)old.dispose()}
+  if(show&&(envSun.distanceToSquared(sd)>.02||envT<0)&&tsec-envT>20){envSun.copy(sd);envT=tsec;envSky.material.uniforms.sunPosition.value.copy(sd);const old=envRT;envRT=pmremU.fromScene(envScene,0,.1,1000);scene.environment=envRT.texture;if(old)old.dispose()}
   else if(!show&&ENV0&&scene.environment!==ENV0){scene.environment=ENV0;envT=-99}
   if(show&&envRT&&scene.environment===envRT.texture)scene.environmentIntensity*=.32;
   // wet roads: shiny reflective ground when it rains
@@ -495,9 +495,9 @@ function foliageAssets(){if(CANOPY_GEO)return;
 let GRASS=null,grassC=new THREE.Vector2(1e9,1e9),CLOUDS=null;
 function ultraExtras(on,dl){
   if(on&&!GRASS){const bl=new THREE.PlaneGeometry(.07,.5,1,3);bl.translate(0,.25,0);const p=bl.attributes.position;for(let i=0;i<p.count;i++){const y=p.getY(i);p.setX(i,p.getX(i)*(1-y/.55));p.setZ(i,(y*y)*.25)}bl.computeVertexNormals();
-    const gm=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.85,side:THREE.DoubleSide});windify(gm,.09,true);GRASS=new THREE.InstancedMesh(bl,gm,9000);GRASS.frustumCulled=false;GRASS.receiveShadow=true;scene.add(GRASS);grassC.set(1e9,1e9)}
-  if(GRASS){GRASS.visible=on&&!W.snow;if(GRASS.visible){const px=P.x*S,pz=P.y*S;if(Math.hypot(px-grassC.x,pz-grassC.y)>7){grassC.set(px,pz);const m4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),sc=new THREE.Vector3(),po=new THREE.Vector3(),c=new THREE.Color();const rr=mulberry32((px*7+pz*13)|0);
-      for(let i=0;i<9000;i++){const a=rr()*TAU,r=Math.sqrt(rr())*26,x=px+Math.cos(a)*r,z=pz+Math.sin(a)*r,t=tileAt(x/S,z/S);if(t!==G&&t!==PK){sc.set(0,0,0)}else sc.set(1,.6+rr()*.9,1);
+    const gm=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.85,side:THREE.DoubleSide});windify(gm,.09,true);GRASS=new THREE.InstancedMesh(bl,gm,isMobile?5000:9000);GRASS.frustumCulled=false;GRASS.receiveShadow=true;scene.add(GRASS);grassC.set(1e9,1e9)}
+  if(GRASS){GRASS.visible=on&&!W.snow;if(GRASS.visible){const px=P.x*S,pz=P.y*S;if(GRASS._job==null&&Math.hypot(px-grassC.x,pz-grassC.y)>7){grassC.set(px,pz);GRASS._job=0;GRASS._rr=mulberry32((px*7+pz*13)|0)}if(GRASS._job!=null){const m4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),sc=new THREE.Vector3(),po=new THREE.Vector3(),c=new THREE.Color();const rr=GRASS._rr,px=grassC.x,pz=grassC.y,i0=GRASS._job,i1=Math.min(GRASS.count,i0+1200);GRASS._job=i1>=GRASS.count?null:i1;
+      for(let i=i0;i<i1;i++){const a=rr()*TAU,r=Math.sqrt(rr())*26,x=px+Math.cos(a)*r,z=pz+Math.sin(a)*r,t=tileAt(x/S,z/S);if(t!==G&&t!==PK){sc.set(0,0,0)}else sc.set(1,.6+rr()*.9,1);
         e.set(0,rr()*TAU,(rr()-.5)*.3);q.setFromEuler(e);po.set(x,groundH(x/S,z/S)+.01,z);m4.compose(po,q,sc);GRASS.setMatrixAt(i,m4);c.setHSL(.24+rr()*.07,.45+rr()*.2,.22+rr()*.14);GRASS.setColorAt(i,c)}
       GRASS.instanceMatrix.needsUpdate=true;GRASS.instanceColor.needsUpdate=true}}}
   if(on&&!CLOUDS){CLOUDS=new THREE.Mesh(new THREE.PlaneGeometry(1600,1600),new THREE.ShaderMaterial({transparent:true,depthWrite:false,fog:false,uniforms:{t:WIND.t,sunCol:{value:new THREE.Color(1,1,1)},cov:{value:.5},dl:{value:1}},
@@ -3006,10 +3006,16 @@ function gfxSetup(){if(QUAL===0){GFX.comp=null;GFX.q=0;return}
   let trails=null;if(RETRO){trails=new AfterimagePass(.42);comp.addPass(trails)}
   comp.addPass(new OutputPass());
   Object.assign(GFX,{comp,rp,bloom,gtao,grade,trails,q:QUAL,retro:RETRO,w:0,h:0})}
+function perfStepDown(why){GFX.cool=performance.now()+8000;
+  if(QUAL===3&&GFX.gtao&&GFX.gtao.enabled){GFX.gtao.enabled=false}
+  else if(DPR>1.25){DPR=Math.max(1,DPR-.25);renderer.setPixelRatio(DPR);resize()}
+  else if(QUAL>1||(QUAL===1&&DPR>1)){QUAL=Math.max(isMobile?1:0,QUAL-1);try{localStorage.setItem('desicity_q',QUAL)}catch(_){}applyQuality();if(W&&!INT.active)buildCity3D();GFX.cool=performance.now()+15000}
+  else return;toast('⚙️ Graphics lowered to keep the game smooth',1.4)}
 function gfxRender(sc,cam){sc=sc||scene;cam=cam||camera;if(GFX.q!==QUAL||GFX.retro!==RETRO)gfxSetup();
   // Ultra auto-tune: if the phone can't keep up, lower resolution first, then switch off ambient occlusion
-  {const now=performance.now(),d=now-(GFX.lt||now);GFX.lt=now;if(QUAL===3&&d>0&&d<250){GFX.acc=(GFX.acc||0)+d;GFX.n=(GFX.n||0)+1;if(GFX.acc>5000){const fps=GFX.n*1000/GFX.acc;GFX.acc=GFX.n=0;
-    if(fps<24){if(DPR>1.25){DPR=Math.max(1.25,DPR-.25);renderer.setPixelRatio(DPR);resize();toast('💎 Ultra tuned for smoother play',1.2)}else if(GFX.gtao&&GFX.gtao.enabled){GFX.gtao.enabled=false;toast('💎 Ultra tuned for smoother play',1.2)}}}}}if(!GFX.comp){renderer.render(sc,cam);return}
+  {const now=performance.now(),d=now-(GFX.lt||now);GFX.lt=now;if(document.hidden||d>3000||GFX.cool>now){}else if(d>0){
+    if(d>180)GFX.long=(GFX.long||0)+1;GFX.acc=(GFX.acc||0)+Math.min(d,250);GFX.n=(GFX.n||0)+1;
+    if(GFX.acc>6000){const fps=GFX.n*1000/GFX.acc,lg=GFX.long||0;GFX.acc=GFX.n=GFX.long=0;if(fps<22||lg>=3)perfStepDown(fps<22?'slow':'freeze')}}}if(!GFX.comp){renderer.render(sc,cam);return}
   if(GFX.w!==VW||GFX.h!==VH||GFX.dpr!==DPR){GFX.w=VW;GFX.h=VH;GFX.dpr=DPR;GFX.comp.setPixelRatio(DPR);GFX.comp.setSize(VW,VH);const k=QUAL>=2?1:.5;GFX.bloom.setSize(VW*DPR*k,VH*DPR*k);if(GFX.gtao)GFX.gtao.setSize(Math.round(VW*DPR*.5),Math.round(VH*DPR*.5))}
   GFX.rp.scene=sc;GFX.rp.camera=cam;if(GFX.gtao&&(GFX.gtao.scene!==sc||GFX.gtao.camera!==cam)){GFX.gtao.scene=sc;GFX.gtao.camera=cam;GFX.gtao.setSize(Math.round(VW*DPR*.5),Math.round(VH*DPR*.5))}if(GFX.grade)GFX.grade.uniforms.vig.value=sc===scene?.32:.22;
   // bloom: subtle by day, stronger at night so windows, signs, lamps and neon glow
@@ -3047,7 +3053,7 @@ async function modelsInit(){try{const r=await fetch('models/manifest.json',{cach
 // ---------- ⚙️ Graphics & 3D models panel ----------
 function gfxPanel(){const L=$('shoplist');L.innerHTML='';$('shopt').textContent='⚙️ GRAPHICS & 3D MODELS';$('shops').textContent='Now: '+['Low','Medium','High','Ultra'][QUAL]+' quality';
   const row=(ic,name,desc,btn,fn)=>{const e=document.createElement('div');e.className='item';e.innerHTML='<div class="ic">'+ic+'</div><div class="tx"><b>'+name+'</b><small>'+desc+'</small></div>';const b=document.createElement('button');b.className='btn';b.textContent=btn;b.onclick=fn;e.appendChild(b);L.appendChild(e);return b};
-  [['🔋','Low','Fastest · no shadows, no post effects'],['⚖️','Medium','Soft shadows, smooth edges (MSAA x2), gentle bloom'],['✨','High','Sharp shadows 2048, MSAA x4, full bloom glow'],['💎','Ultra','Real sky + sun reflections, ambient occlusion, 4K shadows, wet roads in rain, film colour · needs a strong phone/GPU']].forEach(([ic,n,d],i)=>row(ic,n,d,QUAL===i?'✓ On':'Use',()=>{QUAL=i;try{localStorage.setItem('desicity_q',QUAL)}catch(_){}applyQuality();if(W)buildCity3D();gfxPanel()}));
+  [['🔋','Low','Fastest · no shadows, no post effects'],['⚖️','Medium','Soft shadows, smooth edges (MSAA x2), gentle bloom'],['✨','High','Sharp shadows 2048, MSAA x4, full bloom glow'],['💎','Ultra','Real sky + sun reflections, ambient occlusion, 4K shadows, wet roads in rain, film colour · needs a strong phone/GPU']].forEach(([ic,n,d],i)=>row(ic,n,d,QUAL===i?'✓ On':'Use',()=>{QUAL=i;try{localStorage.setItem('desicity_q',QUAL);localStorage.setItem('desicity_qset','1')}catch(_){}applyQuality();if(W)buildCity3D();gfxPanel()}));
   row('🌴','Retro 2000s style','Warm tropical colours, pink sunset haze, glowing neon shop signs, palm-lined streets, double yellow road lines, dreamy motion trails',RETRO?'✓ On':'Off',()=>{RETRO=!RETRO;try{localStorage.setItem('desicity_retro',RETRO?'1':'0')}catch(_){}applySkyPalette();if(W)buildCity3D();gfxPanel()});
   const sel=document.createElement('div');sel.className='item';sel.innerHTML='<div class="ic">🧩</div><div class="tx"><b>Use your own .glb model</b><small>Pick a vehicle, then choose a .glb file. It replaces the built-in shape and is saved on this device.</small></div>';L.appendChild(sel);
   const s=document.createElement('select');s.style.cssText='width:100%;padding:8px;border-radius:8px;margin:4px 0;background:#111;color:#fff;border:1px solid #555';for(const t of MODEL_TYPES){const o=document.createElement('option');o.value=t;o.textContent=t+(MODELS.vehicle[t]?' ✓ custom':'');s.appendChild(o)}L.appendChild(s);
