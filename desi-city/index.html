@@ -3258,13 +3258,13 @@ window.__net=null;const NET={mode:null,code:null,nick:'',remotes:new Map(),log:[
 try{NET.nick=localStorage.getItem('desicity_nick')||''}catch(e){}window.__net=NET;
 const PCOL=['#1f6fd1','#16a085','#d35400','#8e44ad','#c0392b','#2c3e50'];
 function netAvailable(){return NET.room||NET.wsURL||NET.p2p}
-async function onlineInit(){if(window.__oni)return;window.__oni=1;buildOnlineUI();$('onl').style.display='flex';NET.why=window.claude&&window.claude.use?'checking':'outside';
+async function onlineInit(){if(window.__oni)return;window.__oni=1;buildOnlineUI();$('onl').style.display='flex';NET.why=window.__rt&&window.__rt.use?'checking':'outside';
   // self-hosted server?
-  if(location.protocol.startsWith('http')&&!window.claude){try{const r=await fetch('/desi-online',{cache:'no-store'});if(r.ok){NET.wsURL=(location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws';$('onl').style.display='flex'}}catch(e){}
+  if(location.protocol.startsWith('http')&&!window.__rt){try{const r=await fetch('/desi-online',{cache:'no-store'});if(r.ok){NET.wsURL=(location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws';$('onl').style.display='flex'}}catch(e){}
     if(!NET.wsURL&&window.RTCPeerConnection){NET.p2p=true;NET.why='ok';// open world: everyone who opens the game lands in the same public world automatically
       const auto=()=>{if(started&&!NET.g&&!NET.autoTried){NET.autoTried=1;joinGame('w-india',true)}else if(!NET.g&&!NET.autoTried)setTimeout(auto,1500)};setTimeout(auto,2500)}}
-  if(window.claude&&window.claude.use){try{const room=await window.claude.use('room');if(room){NET.room=room;NET.why='ok';watchLobby()}else if(!NET.wsURL)NET.why='noroom';if($('onpanel').style.display==='block')renderPanel()
-      NET.user=await window.claude.use('user');NET.tts=await window.claude.use('tts');NET.dict=await window.claude.use('dictation')}catch(e){}}
+  if(window.__rt&&window.__rt.use){try{const room=await window.__rt.use('room');if(room){NET.room=room;NET.why='ok';watchLobby()}else if(!NET.wsURL)NET.why='noroom';if($('onpanel').style.display==='block')renderPanel()
+      NET.user=await window.__rt.use('user');NET.tts=await window.__rt.use('tts');NET.dict=await window.__rt.use('dictation')}catch(e){}}
   setInterval(sendState,110)}
 function myState(){const s={c:W?W.name:'',nick:NET.nick||'Player',col:P.shirt||'#7b1e2b',o:P.outfit||0,in:INT.active?1:0,d:P.dead?1:0};
   if(W&&W.real&&REAL){const[e,n]=px2m(P.x,P.y);s.e=Math.round(e*10)/10;s.n=Math.round(n*10)/10}else{s.e=Math.round(P.x)/8;s.n=-Math.round(P.y)/8;s.cls=1}
@@ -3426,7 +3426,7 @@ function renderPanel(){const box=$('onbox');if(!box)return;box.innerHTML='';cons
     msg.innerHTML=NET.why==='outside'?'<b>You opened the offline copy of the game.</b><br>Online play works inside Claude (the game link) or on the self-hosted server.':
       '<b>You can\'t join online games from this link yet.</b><br>Live games only work for people the game is <b>shared with by invite</b>. Opening it from a public link, or while signed out, isn\'t enough.';
     const st=h('div');st.style.cssText='margin-top:10px;line-height:1.5;background:rgba(255,255,255,.06);border-radius:10px;padding:10px';
-    st.innerHTML='<b>How to fix it:</b><br>1️⃣ Make sure you\'re <b>signed in to Claude</b>.<br>2️⃣ Ask the game owner to open the game in Claude → <b>Share</b> → <b>invite your email</b>.<br>3️⃣ Open the game from <b>that invite</b> (not the public link), then tap 🌐 Online.<br><br>Or play on the owner\'s own server version (works for anyone with the link, and has live voice).';
+    st.innerHTML='<b>How to fix it:</b><br>1️⃣ Make sure you\'re <b>signed in</b>.<br>2️⃣ Ask the game owner to open the game → <b>Share</b> → <b>invite your email</b>.<br>3️⃣ Open the game from <b>that invite</b> (not the public link), then tap 🌐 Online.<br><br>Or play on the owner\'s own server version (works for anyone with the link, and has live voice).';
     const c=h('button','Close','g');c.style.marginTop='10px';c.onclick=closeOnline;return}
   h('small','Your name');const nm=h('input');nm.value=NET.nick;nm.maxLength=14;nm.placeholder='e.g. Sai';nm.oninput=()=>{NET.nick=nm.value.replace(/[^\p{L}\p{N} _.-]/gu,'').slice(0,14);try{localStorage.setItem('desicity_nick',NET.nick)}catch(e){}};nm.addEventListener('keydown',e=>e.stopPropagation());
   if(!NET.g){if(NET.p2p){const ow=h('button','🌍 Join open world (everyone)');ow.style.marginBottom='8px';ow.onclick=()=>joinGame('w-india')}h('small','Make a game and share its code, or type a friend\'s code (2-4 players).');const r=h('div',undefined,'row');const mk=document.createElement('button');mk.textContent='➕ Create game';r.appendChild(mk);
@@ -3438,7 +3438,7 @@ function renderPanel(){const box=$('onbox');if(!box)return;box.innerHTML='';cons
     const r=h('div',undefined,'row');const vb=document.createElement('button');vb.id='bvoice';vb.className='g';const mic=NET.voice&&NET.voice.st;if(mic)vb.classList.add('on');vb.textContent=mic?'🎙️ Mic on (tap to mute)':'🎙️ Turn on mic';vb.onclick=()=>{NET.voice&&NET.voice.st?voiceStop():voiceStart()};r.appendChild(vb);
     if(NET.tts){const tb=document.createElement('button');tb.className='g';tb.textContent=NET.ttsOn?'🔊 Read chat aloud':'🔇 Chat silent';tb.onclick=()=>{NET.ttsOn=!NET.ttsOn;renderPanel()};r.appendChild(tb)}
     const lv=h('button','🚪 Leave game','g');lv.style.marginTop='6px';lv.onclick=()=>leaveGame()}
-  h('small',NET.mode==='p2p'||(!NET.g&&NET.p2p)?'Open online play: anyone who opens this game link joins the same world automatically, no sign-in. Make a private game with a code to play with just friends.':NET.mode==='ws'||(!NET.g&&NET.wsURL)?'Server mode: real voice chat available.':'⚠️ This is the Claude copy of the game. Players here can only meet others on this same Claude copy. To play and talk with anyone, everyone should open: tonibommisetty.github.io/desi-city').style.cssText='display:block;margin-top:10px';
+  h('small',NET.mode==='p2p'||(!NET.g&&NET.p2p)?'Open online play: anyone who opens this game link joins the same world automatically, no sign-in. Make a private game with a code to play with just friends.':NET.mode==='ws'||(!NET.g&&NET.wsURL)?'Server mode: real voice chat available.':'⚠️ This is the preview copy of the game. Players here can only meet others on this same preview copy. To play and talk with anyone, everyone should open: tonibommisetty.github.io/desi-city').style.cssText='display:block;margin-top:10px';
   const c=h('button','Close','g');c.style.marginTop='8px';c.onclick=closeOnline}
 
 // ================= GRAPHICS UPGRADE: post-processing (MSAA + bloom), ground detail, swappable .glb models =================
