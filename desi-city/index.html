@@ -2844,12 +2844,12 @@ let lastSent='';function sendState(){if(!NET.g)return;const s=myState();const k=
 function watchLobby(){const room=NET.room;room.onPeers(()=>{if($('onpanel').style.display==='block')renderPanel()},()=>{});room.presence({lobby:null}).catch(()=>{})}
 async function joinGame(code,quietAuto){code=(code||'').toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,20);if(!code){toast('Enter a game code',1.2);return}
   if(NET.g)await leaveGame(true);
-  try{if(NET.room){const r=await NET.room.join('desi-'+code);NET.g=r;NET.mode='room'}else if(NET.wsURL){NET.g=await wsJoin(code);NET.mode='ws'}else if(NET.p2p){NET.g=await p2pJoin(code);NET.mode='p2p'}else{toast('Online play is not available here',1.6);return}}catch(e){toast('Could not join: '+(e.code||e.message),2);return}
+  try{if(NET.room){const r=await NET.room.join('desi-'+code);NET.g=r;NET.mode='room'}else if(NET.wsURL){NET.g=await wsJoin(code);NET.mode='ws'}else if(NET.p2p){NET.g=await p2pJoin(code);NET.mode='p2p'}else{toast('Online play is not available here',1.6);return}if(NET.mode==='p2p'||NET.mode==='ws')voiceEnsure();}catch(e){toast('Could not join: '+(e.code||e.message),2);return}
   NET.code=code;NET.g.onPeers(ch=>{if(ch.joined)for(const p of ch.joined)if(!p.isMe)NET.greet=(NET.greet||new Set()).add(p.peer);if(ch.left)for(const p of ch.left){dropRemote(p.peer);netSys('🚪 A player left')}renderPanel();if(NET.voice)voicePeers()},()=>{});
   setTimeout(()=>{if(!NET.g)return;const n=NET.g.peers().filter(p=>p.kind!=='agent').length;if(n>(code.startsWith('w-')?16:4)){toast('😕 That game is full (4 players max)',2);leaveGame()}},2500);
   if(NET.room)NET.room.presence({lobby:{code,city:W.name,nick:NET.nick||'Player'}}).catch(()=>{});
   sendState();toast(code==='w-india'?'🌐 You are online in the open world<br><small>Anyone playing Desi City can see you</small>':'🌐 Joined game <b>'+code+'</b><br><small>Share this code with up to 3 friends</small>',2.4);$('onl').classList.add('live');renderPanel();showChatBar(true)}
-async function leaveGame(quiet){if(!NET.g)return;try{await NET.g.leave()}catch(e){}NET.g=null;NET.code=null;for(const k of[...NET.remotes.keys()])dropRemote(k);if(NET.room)NET.room.presence({lobby:null}).catch(()=>{});if(NET.voice)voiceStop();$('onl').classList.remove('live');showChatBar(false);if(!quiet)toast('Left the online game',1.2);renderPanel()}
+async function leaveGame(quiet){if(!NET.g)return;if(NET.voice){if(NET.voice.st)NET.voice.st.getTracks().forEach(t=>t.stop());for(const pc of NET.voice.pcs.values())pc.close();for(const a of NET.voice.au.values())a.remove();NET.voice=null;const b=$('bvoice');if(b){b.classList.remove('on');b.textContent='🎙️ Voice'}}try{await NET.g.leave()}catch(e){}NET.g=null;NET.code=null;for(const k of[...NET.remotes.keys()])dropRemote(k);if(NET.room)NET.room.presence({lobby:null}).catch(()=>{});if(NET.voice)voiceStop();$('onl').classList.remove('live');showChatBar(false);if(!quiet)toast('Left the online game',1.2);renderPanel()}
 function netPeers(){if(!NET.g)return[];return NET.g.peers().filter(p=>p.kind!=='agent')}
 
 
@@ -2928,16 +2928,33 @@ function goToFriend(peer){const r=NET.remotes.get(peer);if(!r||!r.s)return;const
   if(P.veh){toast('Get out of the vehicle first',1.2);return}const[x,y]=m2px(s.e,s.n);P.x=x+30;P.y=y+30;closeOnline();toast('📍 You are next to '+(s.nick||'your friend'),1.4)}
 
 // ----- voice chat (self-hosted server only: real microphone audio over WebRTC) -----
-async function voiceStart(){if(NET.mode!=='ws'){toast('🎙️ Live voice needs the self-hosted server version (see README).<br><small>Here: use 💬 chat — tap 🎤 to talk and it types for you</small>',3);return}
-  try{const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});NET.voice={st,pcs:new Map(),au:new Map(),muted:false};
-    if(!NET.sigOn){NET.sigOn=1;NET.g.onSignal(onSignal)}for(const p of netPeers())if(!p.isMe)NET.g.signal(p.peer,{hello:1});$('bvoice').classList.add('on');$('bvoice').textContent='🎙️ Mic on';toast('🎙️ Voice chat on - your friends can hear you',1.8)}catch(e){toast('Microphone blocked: '+e.message,2)}}
-function voiceStop(){const v=NET.voice;if(!v)return;v.st.getTracks().forEach(t=>t.stop());for(const pc of v.pcs.values())pc.close();for(const a of v.au.values())a.remove();NET.voice=null;const b=$('bvoice');if(b){b.classList.remove('on');b.textContent='🎙️ Voice'}}
-function mkPC(peer){const v=NET.voice;const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});v.st.getTracks().forEach(t=>pc.addTrack(t,v.st));
-  pc.onicecandidate=e=>{if(e.candidate)NET.g.signal(peer,{c:e.candidate})};pc.ontrack=e=>{let a=v.au.get(peer);if(!a){a=document.createElement('audio');a.autoplay=true;a.playsInline=true;document.body.appendChild(a);v.au.set(peer,a)}a.srcObject=e.streams[0]};v.pcs.set(peer,pc);return pc}
-async function callPeer(peer){const v=NET.voice;const old=v.pcs.get(peer);if(old)old.close();const pc=mkPC(peer);const o=await pc.createOffer();await pc.setLocalDescription(o);NET.g.signal(peer,{sdp:pc.localDescription})}
-async function voicePeers(){const v=NET.voice;if(!v||!NET.g.me)return;
-  for(const[k,pc]of v.pcs)if(!netPeers().some(p=>p.peer===k)){pc.close();v.pcs.delete(k);const a=v.au.get(k);if(a){a.remove();v.au.delete(k)}}}
-async function onSignal(from,d){const v=NET.voice;if(!v)return;let pc=v.pcs.get(from);if(d.hello){if(NET.g.me()<from)callPeer(from);else NET.g.signal(from,{hello:1});return}if(d.sdp){if(d.sdp.type==='offer'){if(pc)pc.close();pc=mkPC(from)}else if(!pc)return;await pc.setRemoteDescription(d.sdp);if(d.sdp.type==='offer'){const a=await pc.createAnswer();await pc.setLocalDescription(a);NET.g.signal(from,{sdp:pc.localDescription})}}else if(d.c&&pc){try{await pc.addIceCandidate(d.c)}catch(e){}}}
+// Voice chat: whoever turns their mic on is heard by everyone in the game; others don't need to press anything to listen.
+const VOICE_ICE=[{urls:['stun:stun.l.google.com:19302','stun:stun.cloudflare.com:3478']},{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}];
+function voiceEnsure(){if(!NET.voice)NET.voice={st:null,pcs:new Map(),au:new Map(),hi:new Set(),muted:false};if(NET.g&&NET.sigG!==NET.g&&NET.g.onSignal){NET.sigG=NET.g;NET.g.onSignal(onSignal)}return NET.voice}
+async function voiceStart(){if(NET.mode!=='ws'&&NET.mode!=='p2p'){toast('🎙️ Live voice works on the website version of the game.<br><small>Here: use 💬 chat — tap 🎤 to talk and it types for you</small>',3);return}
+  try{const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});const v=voiceEnsure();
+    for(const pc of v.pcs.values())pc.close();v.pcs.clear();v.hi.clear();v.st=st;unlockAudio();
+    for(const p of netPeers())if(!p.isMe){v.hi.add(p.peer);NET.g.signal(p.peer,{hello:1})}$('bvoice').classList.add('on');$('bvoice').textContent='🎙️ Mic on (tap to mute)';toast('🎙️ Mic on - other players can hear you',1.8)}catch(e){toast('🎙️ Microphone blocked: allow microphone access for this site in your browser settings',3)}}
+function voiceStop(){const v=NET.voice;if(!v||!v.st)return;v.st.getTracks().forEach(t=>t.stop());v.st=null;for(const pc of v.pcs.values())pc.close();v.pcs.clear();v.hi.clear();
+  for(const p of netPeers())if(!p.isMe)NET.g.signal(p.peer,{bye:1});const b=$('bvoice');if(b){b.classList.remove('on');b.textContent='🎙️ Voice'}toast('🎙️ Mic off',1)}
+function unlockAudio(){const v=NET.voice;if(!v)return;for(const a of v.au.values()){a.muted=false;a.play().catch(()=>{})}}
+addEventListener('pointerdown',()=>{if(NET.voice&&NET.voice.blocked){NET.voice.blocked=false;unlockAudio()}},true);
+function mkPC(peer){const v=NET.voice;const pc=new RTCPeerConnection({iceServers:VOICE_ICE});if(v.st)v.st.getTracks().forEach(t=>pc.addTrack(t,v.st));else pc.addTransceiver('audio',{direction:'recvonly'});
+  pc.onicecandidate=e=>{if(e.candidate)NET.g.signal(peer,{c:e.candidate.toJSON?e.candidate.toJSON():e.candidate})};
+  pc.ontrack=e=>{let a=v.au.get(peer);if(!a){a=document.createElement('audio');a.autoplay=true;a.playsInline=true;a.setAttribute('playsinline','');document.body.appendChild(a);v.au.set(peer,a)}a.srcObject=e.streams[0]||new MediaStream([e.track]);
+    a.play().then(()=>{const r=NET.remotes.get(peer);netSys('🔊 You can hear '+((r&&r.nick)||'a player'))}).catch(()=>{v.blocked=true;toast('🔊 Tap the screen to hear other players',2.2)})};
+  v.pcs.set(peer,pc);return pc}
+async function callPeer(peer){const v=NET.voice;const old=v.pcs.get(peer);if(old)old.close();const pc=mkPC(peer);const o=await pc.createOffer();await pc.setLocalDescription(o);NET.g.signal(peer,{sdp:{type:pc.localDescription.type,sdp:pc.localDescription.sdp}})}
+async function voicePeers(){const v=NET.voice;if(!v||!NET.g||!NET.g.me)return;const ids=new Set(netPeers().map(p=>p.peer));
+  for(const[k,pc]of v.pcs)if(!ids.has(k)){pc.close();v.pcs.delete(k);const a=v.au.get(k);if(a){a.remove();v.au.delete(k)}v.hi.delete(k)}
+  if(v.st)for(const p of netPeers())if(!p.isMe&&!v.hi.has(p.peer)&&!v.pcs.has(p.peer)){v.hi.add(p.peer);NET.g.signal(p.peer,{hello:1})}}
+async function onSignal(from,d){if(!d||typeof d!=='object')return;const v=voiceEnsure();let pc=v.pcs.get(from);
+  if(d.bye){if(pc&&!v.st){pc.close();v.pcs.delete(from)}return}
+  if(d.hello){if(NET.g.me()<from)callPeer(from);else NET.g.signal(from,{hello2:1});return}
+  if(d.hello2){callPeer(from);return}
+  if(d.sdp){if(d.sdp.type==='offer'){if(pc)pc.close();pc=mkPC(from)}else if(!pc)return;try{await pc.setRemoteDescription(d.sdp);if(d.sdp.type==='offer'){const a=await pc.createAnswer();await pc.setLocalDescription(a);NET.g.signal(from,{sdp:{type:pc.localDescription.type,sdp:pc.localDescription.sdp}})}
+    if(pc._pend){for(const c of pc._pend)try{await pc.addIceCandidate(c)}catch(e){}pc._pend=null}}catch(e){console.warn('voice',e)}}
+  else if(d.c){if(!pc)return;if(!pc.remoteDescription){(pc._pend||(pc._pend=[])).push(d.c);return}try{await pc.addIceCandidate(d.c)}catch(e){}}}
 
 // ----- UI -----
 function buildOnlineUI(){const st=document.createElement('style');st.textContent=
@@ -2956,7 +2973,7 @@ function buildOnlineUI(){const st=document.createElement('style');st.textContent
   const ci=document.createElement('div');ci.id='chatin';ci.innerHTML='<input id="chattx" maxlength="160" placeholder="Say something to your friends…" enterkeyhint="send"><button id="chatmic" style="background:#2d3436;color:#fff">🎤</button><button id="chatsend">Send</button>';document.body.appendChild(ci);
   const lg=document.createElement('div');lg.id='chatlog';document.body.appendChild(lg);
   $('bchat').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();NET.clicked=1;openChatInput()});
-  $('bvoice2').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();NET.clicked=1;if(NET.mode==='ws'||NET.mode==='p2p'){NET.voice?voiceStop():voiceStart()}else{openChatInput();dictate()}});
+  $('bvoice2').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();NET.clicked=1;if(NET.mode==='ws'||NET.mode==='p2p'){NET.voice&&NET.voice.st?voiceStop():voiceStart()}else{openChatInput();dictate()}});
   $('chatsend').onclick=()=>{sendChat($('chattx').value);$('chattx').value='';closeChatInput()};$('chattx').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){sendChat($('chattx').value);$('chattx').value='';closeChatInput()}else if(e.key==='Escape')closeChatInput()});
   $('chatmic').onclick=()=>dictate();
   document.addEventListener('pointerdown',e=>{if($('chatin').style.display==='flex'&&!$('chatin').contains(e.target))closeChatInput()})}
@@ -2985,7 +3002,7 @@ function renderPanel(){const box=$('onbox');if(!box)return;box.innerHTML='';cons
   else{h('div',NET.code==='w-india'?'🌍 Open world (everyone)':'Game code: '+NET.code).style.cssText='font-size:22px;font-weight:900;color:#ffd34d;margin:4px 0';h('small','Friends open this same game, tap 🌐 Online and type this code.');const ps=netPeers();h('div','Players ('+ps.length+'/4):').style.marginTop='8px';
     ps.forEach((p,i)=>{const s=p.presence&&p.presence.s;const row=h('div',undefined,'pl');const dot=document.createElement('i');const r=NET.remotes.get(p.peer);dot.style.background=p.isMe?'#7CFC8A':(r?r.col:PCOL[i%PCOL.length]);row.appendChild(dot);const sp=document.createElement('span');sp.textContent=(p.isMe?'You':String((s&&s.nick)||'Player').slice(0,14))+(s&&s.c?' · '+String(s.c).slice(0,20):'')+(p.guest?' (guest)':'');row.appendChild(sp);
       if(!p.isMe){const g=document.createElement('button');g.textContent='Go to';g.onclick=()=>goToFriend(p.peer);row.appendChild(g)}});
-    const r=h('div',undefined,'row');const vb=document.createElement('button');vb.id='bvoice';vb.className='g';vb.textContent=NET.voice?'🎙️ Mic on':'🎙️ Voice';vb.onclick=()=>{NET.voice?voiceStop():voiceStart()};r.appendChild(vb);
+    const r=h('div',undefined,'row');const vb=document.createElement('button');vb.id='bvoice';vb.className='g';const mic=NET.voice&&NET.voice.st;if(mic)vb.classList.add('on');vb.textContent=mic?'🎙️ Mic on (tap to mute)':'🎙️ Turn on mic';vb.onclick=()=>{NET.voice&&NET.voice.st?voiceStop():voiceStart()};r.appendChild(vb);
     if(NET.tts){const tb=document.createElement('button');tb.className='g';tb.textContent=NET.ttsOn?'🔊 Read chat aloud':'🔇 Chat silent';tb.onclick=()=>{NET.ttsOn=!NET.ttsOn;renderPanel()};r.appendChild(tb)}
     const lv=h('button','🚪 Leave game','g');lv.style.marginTop='6px';lv.onclick=()=>leaveGame()}
   h('small',NET.mode==='p2p'||(!NET.g&&NET.p2p)?'Open online play: anyone who opens this game link joins the same world automatically, no sign-in. Make a private game with a code to play with just friends.':NET.mode==='ws'||(!NET.g&&NET.wsURL)?'Server mode: real voice chat available.':'In Claude: chat with 💬. Tap 🎤 to speak and it types for you. Friends need to be signed in to Claude and invited to this game.').style.cssText='display:block;margin-top:10px';
