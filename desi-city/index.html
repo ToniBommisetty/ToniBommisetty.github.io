@@ -3252,7 +3252,7 @@ function pilgrims(){const h=W.hills&&W.hills.find(q=>q.mesa);let n=0;for(const p
 
 // ================= ONLINE: 2-4 players, chat, voice =================
 // Two transports with the same shape:
-//  - "room": Claude artifact live rooms (signed-in viewers the artifact is shared with). Text chat, speech-to-text, read-aloud.
+//  - "room": hosted live rooms (signed-in viewers). Text chat, speech-to-text, read-aloud.
 //  - "ws":   self-hosted server (server.mjs in the project). Anyone with the link, plus real voice chat over WebRTC.
 window.__net=null;const NET={mode:null,code:null,nick:'',remotes:new Map(),log:[],lastChat:null,tts:null,dict:null,ttsOn:true,voice:null};
 try{NET.nick=localStorage.getItem('desicity_nick')||''}catch(e){}window.__net=NET;
@@ -3272,7 +3272,7 @@ function myState(){const s={c:W?W.name:'',nick:NET.nick||'Player',col:P.shirt||'
   if(P.veh){s.v=P.veh.type;s.vc=P.veh.col;s.al=Math.round((P.veh.alt||0)*10)/10}if(P.glide)s.g=Math.round(P.glide.alt);if(P.dance)s.dn=1;if((P.atkT||0)>0)s.ak=P.atkKind;if(P.netHit&&tsec-P.netHit.t<1.5)s.hit={to:P.netHit.to,d:P.netHit.d,k:P.netHit.k,n:P.netHit.n};if(P.wk2)s.wk=P.wk2.pose;return s}
 let lastSent='';function sendState(){if(!NET.g)return;const s=myState();const k=JSON.stringify(s);if(k===lastSent&&Math.random()<.9)return;lastSent=k;NET.g.presence({s}).catch(()=>{})}
 
-// ----- transport: Claude live room -----
+// ----- transport: hosted live room -----
 function watchLobby(){const room=NET.room;room.onPeers(()=>{if($('onpanel').style.display==='block')renderPanel()},()=>{});room.presence({lobby:null}).catch(()=>{})}
 async function joinGame(code,quietAuto){code=(code||'').toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,20);if(!code){toast('Enter a game code',1.2);return}
   if(NET.g)await leaveGame(true);
@@ -3423,7 +3423,7 @@ function renderPanel(){const box=$('onbox');if(!box)return;box.innerHTML='';cons
   if(!netAvailable()){
     if(NET.why==='checking'){h('div','Connecting to online play…');const c=h('button','Close','g');c.onclick=closeOnline;return}
     const msg=h('div');msg.style.cssText='line-height:1.45';
-    msg.innerHTML=NET.why==='outside'?'<b>You opened the offline copy of the game.</b><br>Online play works inside Claude (the game link) or on the self-hosted server.':
+    msg.innerHTML=NET.why==='outside'?'<b>You opened the offline copy of the game.</b><br>Online play works on the game website.':
       '<b>You can\'t join online games from this link yet.</b><br>Live games only work for people the game is <b>shared with by invite</b>. Opening it from a public link, or while signed out, isn\'t enough.';
     const st=h('div');st.style.cssText='margin-top:10px;line-height:1.5;background:rgba(255,255,255,.06);border-radius:10px;padding:10px';
     st.innerHTML='<b>How to fix it:</b><br>1️⃣ Make sure you\'re <b>signed in</b>.<br>2️⃣ Ask the game owner to open the game → <b>Share</b> → <b>invite your email</b>.<br>3️⃣ Open the game from <b>that invite</b> (not the public link), then tap 🌐 Online.<br><br>Or play on the owner\'s own server version (works for anyone with the link, and has live voice).';
