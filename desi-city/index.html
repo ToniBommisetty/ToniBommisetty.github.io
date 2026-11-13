@@ -1070,12 +1070,13 @@ function render3D(dt){
   // --- camera ---
   const now=performance.now();let tx=P.x*S,tz=P.y*S,ty=1.7+(P.veh?vehY(P.veh):Math.max(-1.2,P.wadeY||0)+(P.jy||0)*.6+(P.glide?P.glide.alt:groundH(P.x,P.y))),dist=VW<VH?6.2:5.2,ch=.0;if(P.glide)dist=9;
   if(P.veh){const v=P.veh;if(now-lastLook>1400)camYaw=lerpA(camYaw,v.a,dt*(Math.abs(v.v)>30?3.2:1.2));dist=Math.min(36,Math.max(VW<VH?10:8,v.L*S*(VW<VH?2:1.6)));ty=Math.min(9,1.8+v.L*S*.2)+vehY(v);if(now-lastLook>1400)camPitch+=(.22-camPitch)*Math.min(1,dt*2)}
-  const cp=Math.cos(camPitch);let wx=tx-Math.cos(camYaw)*cp*dist,wz=tz-Math.sin(camYaw)*cp*dist,wy=ty+Math.sin(camPitch)*dist;
+  const up=Math.max(0,-camPitch);if(up>0)dist*=1-up*.35;const cp=Math.cos(camPitch);let wx=tx-Math.cos(camYaw)*cp*dist,wz=tz-Math.sin(camYaw)*cp*dist,wy=ty+Math.sin(camPitch)*dist;
+  {const fl=(P.veh?vehY(P.veh):P.glide?P.glide.alt:groundH(P.x,P.y))+.35;if(wy<fl)wy=fl}
   // camera collision with buildings
   for(let k=1;k<=(ty>12?0:12);k++){const f=k/12;const sx=tx+(wx-tx)*f,sz=tz+(wz-tz)*f;if(tileAt(sx/S,sz/S)===BD){const ff=Math.max(.15,(k-1.5)/12);wx=tx+(wx-tx)*ff;wz=tz+(wz-tz)*ff;wy=ty+(wy-ty)*Math.max(ff,.6);break}}
   let shx=0,shy=0;if(shake>0){shx=(rand()-.5)*shake*.06;shy=(rand()-.5)*shake*.06;shake=Math.max(0,shake-dt*20)}
   camPos.set(wx+shx,wy+shy,wz);camera.position.lerp(camPos,P.veh?Math.min(1,dt*9):Math.min(1,dt*14));
-  camTgt.set(tx+Math.cos(camYaw)*3,ty+(P.veh?.2:.6),tz+Math.sin(camYaw)*3);camera.lookAt(camTgt);
+  camTgt.set(tx+Math.cos(camYaw)*3,ty+(P.veh?.2:.6)+up*up*14+up*4,tz+Math.sin(camYaw)*3);camera.lookAt(camTgt);
   const spd=P.veh?Math.abs(P.veh.v):0;const fov=(VW<VH?72:60)+Math.min(spd/400,1)*12;if(Math.abs(camera.fov-fov)>.3){camera.fov+=(fov-camera.fov)*Math.min(1,dt*3);camera.updateProjectionMatrix();const bh=VH*DPR;ptsA.p.material.uniforms.scale.value=ptsN.p.material.uniforms.scale.value=bh/(2*Math.tan(camera.fov*Math.PI/360))}
   cam.x=P.x;cam.y=P.y;
   sky.position.copy(camera.position);ultraSky(dl);retroTick();
@@ -3491,7 +3492,7 @@ const look={id:null,x:0,y:0};
 cv.addEventListener('pointerdown',e=>{if(look.id!==null)return;look.id=e.pointerId;look.x=e.clientX;look.y=e.clientY;try{cv.setPointerCapture(e.pointerId)}catch(_){}document.getElementById('lhint').style.display='none'});
 window.addEventListener('pointermove',e=>{
   if(e.pointerId===joyId){let dx=e.clientX-joyO.x,dy=e.clientY-joyO.y;const d=Math.hypot(dx,dy),m=Math.min(d,55);if(d>0){dx=dx/d*m;dy=dy/d*m}jknob.style.left=(35+dx)+'px';jknob.style.top=(35+dy)+'px';inp.x=dx/55;inp.y=dy/55}
-  if(e.pointerId===look.id){const dx=e.clientX-look.x,dy=e.clientY-look.y;look.x=e.clientX;look.y=e.clientY;camYaw+=dx*.0075;camPitch=clamp(camPitch+dy*.005,-.05,1.15);lastLook=performance.now()}});
+  if(e.pointerId===look.id){const dx=e.clientX-look.x,dy=e.clientY-look.y;look.x=e.clientX;look.y=e.clientY;camYaw+=dx*.0075;camPitch=clamp(camPitch+dy*.005,-.95,1.15);lastLook=performance.now()}});
 const ptrEnd=e=>{if(e.pointerId===joyId){joyId=null;inp.x=inp.y=0;jbase.style.display='none';jknob.style.left='35px';jknob.style.top='35px'}if(e.pointerId===look.id)look.id=null};
 window.addEventListener('pointerup',ptrEnd);window.addEventListener('pointercancel',ptrEnd);
 const mouse={x:0,y:0,t:-1e9,down:false};
