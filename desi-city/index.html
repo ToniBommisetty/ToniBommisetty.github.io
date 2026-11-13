@@ -2268,7 +2268,7 @@ function fxInit(){if(window.__fxi)return;window.__fxi=1;applyUIS();giveTools();o
   const h=document.createElement('div');h.id='hurt';document.body.appendChild(h);
   addEventListener('keydown',e=>{if(e.code==='KeyG'&&started&&!uiOpen())meleeAttack()})}
 
-const _bc3d=buildCity3D;buildCity3D=function(){const r=_bc3d.apply(this,arguments);try{fxBuild()}catch(e){console.warn('fxBuild',e)}return r};
+const _bc3d=buildCity3D;buildCity3D=function(){const r=_bc3d.apply(this,arguments);try{fxBuild()}catch(e){console.warn('fxBuild',e)}try{if(typeof buildDoors==='function')buildDoors()}catch(e){console.warn('doors',e)}return r};
 const _fdx=findDoor;findDoor=function(){return _fdx()||fxDoor()};
 // ===================== SUPER POWERS, RESCUES, HERO TEAM, HOUSES, ROOFS, SEA LIFE, OCEAN LINER =====================
 // (original characters and powers — the "Raksha Force" hero team, web-slinging, flight with laser eyes, super speed)
@@ -2284,12 +2284,12 @@ function inB(b,x,y){if(b.rect){const r=b.rect;return x>r[0]&&x<r[2]&&y>r[1]&&y<r
 function nearBld(x,y,r){let best=null,bd=1e9;for(const b of roofList()){const d0=Math.hypot(b.cx-x,b.cy-y);if(d0>420)continue;if(inB(b,x,y))continue;for(let k=0;k<8;k++){const a=k/8*TAU;if(inB(b,x+Math.cos(a)*r,y+Math.sin(a)*r)){if(d0<bd){bd=d0;best=b}break}}}return best}
 function goRoof(b,how){const gh=groundH(b.cx,b.cy);let x=b.cx,y=b.cy;if(!inB(b,x,y)){for(let k=0;k<40;k++){const a=rand()*TAU,r=rand()*60;if(inB(b,b.cx+Math.cos(a)*r,b.cy+Math.sin(a)*r)){x=b.cx+Math.cos(a)*r;y=b.cy+Math.sin(a)*r;break}}}
   P.x=x;P.y=y;P.jy=0;P.glide={mode:'roof',b,alt:gh+b.h+.02,a:camYaw};if(how)toast(how,1.8)}
-function leaveRoof(){const g=P.glide;if(!g||!g.b)return;const b=g.b;let bx=null;for(let r=20;r<260&&!bx;r+=12)for(let k=0;k<16;k++){const a=k/16*TAU,x=P.x+Math.cos(a)*r,y=P.y+Math.sin(a)*r;if(!inB(b,x,y)&&tileAt(x,y)!==BD&&tileAt(x,y)!==WA){bx=[x,y];break}}
-  if(bx){P.x=bx[0];P.y=bx[1]}P.glide=null;toast('🛗 Back on the street',1.1)}
+function leaveRoof(){const g=P.glide;if(!g||!g.b)return;const b=g.b;const dr=bldDoor(b);if(dr){P.x=dr.ox;P.y=dr.oy;P.glide=null;safeGround();toast('🛗 Back on the street',1.1);return}let bx=null;for(let r=20;r<260&&!bx;r+=12)for(let k=0;k<16;k++){const a=k/16*TAU,x=P.x+Math.cos(a)*r,y=P.y+Math.sin(a)*r;if(!inB(b,x,y)&&tileAt(x,y)!==BD&&tileAt(x,y)!==WA){bx=[x,y];break}}
+  if(bx){P.x=bx[0];P.y=bx[1]}P.glide=null;safeGround();toast('🛗 Back on the street',1.1)}
 // ---------- power orbs scattered around town ----------
 function orbTex(ic,col){return canvasTex(128,128,(g,w,h)=>{const gr=g.createRadialGradient(64,64,6,64,64,62);gr.addColorStop(0,col);gr.addColorStop(.55,col+'99');gr.addColorStop(1,col+'00');g.fillStyle=gr;g.fillRect(0,0,w,h);g.font='64px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText(ic,64,68)})}
-function orbsTick(dt){if(!W||!W.t||INT.active)return;FX3.orbs=FX3.orbs.filter(o=>{if(o.W!==W.t||Math.hypot(o.x-P.x,o.y-P.y)>1600){scene.remove(o.s);o.s.material.map.dispose();o.s.material.dispose();return false}return true});
-  if(FX3.orbs.length<3&&rand()<.02){const ks=['web','sky','speed'],k=ks[(FX3.orbs.length+Math.floor(tsec/40))%3];for(let i=0;i<20;i++){const a=rand()*TAU,d=rr2(260,900),x=P.x+Math.cos(a)*d,y=P.y+Math.sin(a)*d,t=tileAt(x,y);if(t===BD||t===WA)continue;
+function orbsTick(dt){if(!W||!W.t||INT.active)return;FX3.orbs=FX3.orbs.filter(o=>{if(o.W!==W.t||Math.hypot(o.x-P.x,o.y-P.y)>1600||o.x<-1e8){if(o.beam){scene.remove(o.beam);o.beam.geometry.dispose();o.beam.material.dispose()}scene.remove(o.s);o.s.material.map.dispose();o.s.material.dispose();return false}return true});
+  if(FX3.orbs.length<3&&rand()<.05){const ks=['web','sky','speed'],k=ks[(FX3.orbs.length+Math.floor(tsec/40))%3];for(let i=0;i<20;i++){const a=rand()*TAU,d=rr2(200,650),x=P.x+Math.cos(a)*d,y=P.y+Math.sin(a)*d,t=tileAt(x,y);if(t===BD||t===WA||!circleFree(x,y,8))continue;
       const s=new THREE.Sprite(new THREE.SpriteMaterial({map:orbTex(POWERS[k].icon,k==='web'?'#19c3d1':k==='sky'?'#ffb300':'#90caf9'),depthWrite:false,transparent:true}));s.scale.set(2.2,2.2,1);scene.add(s);FX3.orbs.push({k,x,y,s,W:W.t});break}}
   for(const o of FX3.orbs){o.s.position.set(o.x*S,groundH(o.x,o.y)+1.6+Math.sin(tsec*2.5+o.x)*.25,o.y*S);if(!P.veh&&Math.hypot(o.x-P.x,o.y-P.y)<20){givePower(o.k);o.x=-1e9}}}
 function givePower(k){if(P.glide&&P.glide.mode==='fly')P.glide=null;P.power=k;P.powerT=180;hudDirty=true;sfx.cash&&sfx.cash();
@@ -2328,9 +2328,9 @@ function heroMove(dt,I){const g=P.glide;P.atkT=(P.atkT||0)-dt;P.atkCD=(P.atkCD||
   P.moving=false;
   if(g.mode==='swing'){g.t+=dt;const k=Math.min(1,g.t/g.dur),e=k*k*(3-2*k);P.x=g.sx+(g.tx-g.sx)*e;P.y=g.sy+(g.ty-g.sy)*e;g.alt=g.s0+(g.s1-g.s0)*e+Math.sin(k*Math.PI)*Math.max(4,Math.hypot(g.tx-g.sx,g.ty-g.sy)*S*.18);P.a=g.a;camYaw=lerpA(camYaw,g.a,dt*2);
     if(k>=1){goRoof(g.b);P.x=g.tx;P.y=g.ty;if(!inB(g.b,P.x,P.y))goRoof(g.b)}return}
-  if(g.mode==='fall'){g.alt-=dt*14;const gh=groundH(P.x,P.y);if(g.alt<=gh){P.glide=null;damagePlayer(12);toast('Ouch! Hard landing',1)}return}
+  if(g.mode==='fall'){g.alt-=dt*14;const gh=groundH(P.x,P.y);if(g.alt<=gh){P.glide=null;safeGround();damagePlayer(12);toast('Ouch! Hard landing',1)}return}
   if(g.mode==='fly'){const gh=groundH(P.x,P.y);const sp=(mv?95*Math.max(.4,I.m):0)*(P.run||I.sprint?1.6:1);if(mv){P.x+=Math.cos(dir)*sp*dt;P.y+=Math.sin(dir)*sp*dt;P.a=lerpA(P.a,dir,dt*6)}P.flySp=sp;
-    const tgt=g.tgt<0?gh:gh+g.tgt;g.alt+=(tgt-g.alt)*Math.min(1,dt*1.6);if(g.tgt<0&&g.alt-gh<.3){P.glide=null;toast('🛬 Landed',.9);return}
+    const tgt=g.tgt<0?gh:gh+g.tgt;g.alt+=(tgt-g.alt)*Math.min(1,dt*1.6);if(g.tgt<0&&g.alt-gh<.3){const b=roofList().find(q=>inB(q,P.x,P.y));if(b){goRoof(b,'🛬 Landed on the roof');P.x=P.x;return}P.glide=null;safeGround();toast('🛬 Landed',.9);return}
     if(I.fire&&P.fireT<=0){P.fireT=.35;laser()}carryTick(dt)}}
 // ---------- bad guys, people in danger, cheering crowds ----------
 function thugAI(p,dt){p.moving=false;const C=FX3.crime||FX3.mission;const v=p.victim;const px=P.glide?1e9:P.x;const dpl=Math.hypot(P.x-p.x,P.y-p.y),inAir=P.glide&&(P.glide.alt-groundH(P.x,P.y))>3;
@@ -2419,11 +2419,11 @@ function fx3Door(){if(INT.active||P.dead)return null;const g=P.glide;
   if(g&&g.mode==='roof')return{fx:1,label:'🛗 Go back down',fn:leaveRoof};if(g)return null;
   if(P.veh){if(P.veh.water)return shipDoor();return null}
   const sd=shipDoor();if(sd)return sd;
-  const b=nearBld(P.x,P.y,22);if(!b)return null;
+  const dr=nearDoor3();if(!dr)return null;const b=dr.b;
   if(b.home)return{fx:1,label:'🏠 Enter the house',fn:()=>{FX3.homeB=b;enterInterior('home',{type:'home',label:'House',x:P.x,y:P.y})}};
   return{fx:1,label:'🛗 Lift to the roof ('+Math.round(b.h)+' m)',fn:()=>goRoof(b,'🛗 Ding! You are on the roof'+(P.power==='web'?'<br><small>Tap 🕸️ WEB to swing to the next building</small>':''))}}
 // ---------- interiors: a family home, and the liner's grand saloon ----------
-function buildHome(){INT.lights.add(new THREE.HemisphereLight(0xfff1dc,0x553322,.8));const pl=new THREE.PointLight(0xffe0b0,10,18);pl.position.set(0,2.6,0);INT.lights.add(pl);
+function buildHome(){const hb=FX3.homeB,hd=hb&&bldDoor(hb);if(hd){INT.door.x=hd.ox;INT.door.y=hd.oy}INT.lights.add(new THREE.HemisphereLight(0xfff1dc,0x553322,.8));const pl=new THREE.PointLight(0xffe0b0,10,18);pl.position.set(0,2.6,0);INT.lights.add(pl);
   iRoom(10,12,3.1,0xf2e3c6,(g,w,h)=>{g.fillStyle='#b98b5e';g.fillRect(0,0,w,h);for(let i=0;i<w;i+=128)for(let j=0;j<h;j+=128){g.fillStyle=((i+j)/128)%2?'#c79a6c':'#ad7e52';g.fillRect(i+2,j+2,124,124)}});
   const sofa=iMat(0x6d3b2a),wood=iMat(0x7b4a24),cream=iMat(0xf6efe2),steel=iMat(0xb0b6bc,{metalness:.7,roughness:.3}),red=iMat(0xb71c1c);
   iBox(INT.g,-3,.35,-1,.9,.7,2.6,sofa);iBox(INT.g,-3.35,.75,-1,.25,.8,2.6,sofa);const rug=new THREE.Mesh(new THREE.PlaneGeometry(2.6,2),iMat(0x8e2b4f));rug.rotation.x=-Math.PI/2;rug.position.set(-1.6,.01,-1);INT.g.add(rug);
@@ -2456,8 +2456,36 @@ function buildLiner(){INT.lights.add(new THREE.HemisphereLight(0xfff1dc,0x4a3020
   INT.spots.push({x:7,z:.4,r:1.3,label:'🎹 Play the piano',fn:()=>{const n=[523,587,659,784,659,587,523];n.forEach((f,i)=>setTimeout(()=>tone(f,.4,.05,'triangle'),i*260));toast('🎹 Beautiful! The passengers applaud 👏',1.8)}});
   INT.spots.push({x:-5,z:3.4,r:1.4,label:'🍽️ Dine in first class ₹200',fn:()=>{if(P.money<200){toast('Not enough money!',1);return}P.money-=200;P.hp=100;hudDirty=true;toast('🍽️ A royal dinner! Full health',1.8)}});
   INT.spots.push({x:0,z:-1.6,r:1.4,label:'💃 Dance in the saloon',fn:()=>{P.dance=!P.dance}})}
+// ---------- visible doors on houses and tall buildings (and safe exits) ----------
+function bldDoor(b){if(b.door!==undefined)return b.door;const pts=b.rect?[b.rect[0],b.rect[1],b.rect[2],b.rect[1],b.rect[2],b.rect[3],b.rect[0],b.rect[3]]:b.pts;let best=null,bs=-1e9;
+  for(let i=0;i<pts.length;i+=2){const j=(i+2)%pts.length,x0=pts[i],y0=pts[i+1],x1=pts[j],y1=pts[j+1],L=Math.hypot(x1-x0,y1-y0);if(L<14)continue;const mx=(x0+x1)/2,my=(y0+y1)/2;let nx=(y1-y0)/L,ny=-(x1-x0)/L;
+    if(inB(b,mx+nx*4,my+ny*4)){nx=-nx;ny=-ny}const ox=mx+nx*14,oy=my+ny*14,t=tileAt(ox,oy);if(t===BD||t===WA||inB(b,ox,oy))continue;
+    let sc=Math.min(L,60);for(let r=16;r<=64;r+=16){const tt=tileAt(mx+nx*r,my+ny*r);if(tt===RD||tt===SW){sc+=100-r;break}}if(sc>bs){bs=sc;best={x:mx,y:my,ox,oy,a:Math.atan2(y1-y0,x1-x0),b}}}
+  b.door=best;return best}
+function buildDoors(){const G=city3d;if(!G||!W||!W.t)return;FX3.doors=[];for(const b of roofList()){if(!b.home&&b.h<8)continue;const d=bldDoor(b);if(d)FX3.doors.push(d)}
+  const mk=(list,col,frameCol)=>{if(!list.length)return;const m=new THREE.MeshStandardMaterial({color:col,roughness:.6});m._own=true;const im=new THREE.InstancedMesh(BOX1,m,list.length);const fm=new THREE.MeshStandardMaterial({color:frameCol,roughness:.5});fm._own=true;const fr=new THREE.InstancedMesh(BOX1,fm,list.length);
+    const M4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),p=new THREE.Vector3(),s=new THREE.Vector3();list.forEach((d,i)=>{const gh=groundH(d.x,d.y);e.set(0,-d.a,0);q.setFromEuler(e);const nx=(d.ox-d.x)/14,ny=(d.oy-d.y)/14;
+      p.set((d.x+nx*.6)*S,gh+1.15,(d.y+ny*.6)*S);s.set(1.3,2.3,.14);M4.compose(p,q,s);im.setMatrixAt(i,M4);p.set((d.x+nx*.4)*S,gh+1.25,(d.y+ny*.4)*S);s.set(1.6,2.6,.1);M4.compose(p,q,s);fr.setMatrixAt(i,M4)});G.add(fr);G.add(im)};
+  mk(FX3.doors.filter(d=>d.b.home),0x6d3b1e,0xe8dcc6);mk(FX3.doors.filter(d=>!d.b.home),0x5c7a99,0xc0c7cf)}
+function nearDoor3(){let best=null,bd=30;for(const d of FX3.doors||[]){const k=Math.hypot(d.ox-P.x,d.oy-P.y);if(k<bd){bd=k;best=d}}return best}
+function safeGround(){if(tileAt(P.x,P.y)===BD||!circleFree(P.x,P.y,5)){const w=walkNear(W.t,P.x,P.y);if(w){P.x=w[0];P.y=w[1]}}}
+// floating door icons for the closest doors
+function doorIcons(){if(!FX3.doors)return;if(!FX3.icons){FX3.icons=[];const th=canvasTex(128,128,(g)=>{g.font='88px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText('🏠',64,70)}),tl=canvasTex(128,128,(g)=>{g.font='88px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText('🛗',64,70)});
+    for(let i=0;i<10;i++){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:th,transparent:true,depthWrite:false}));s.scale.set(1.1,1.1,1);s.visible=false;scene.add(s);FX3.icons.push(s)}FX3.iconTex=[th,tl]}
+  const L=FX3.doors.map(d=>[Math.hypot(d.ox-P.x,d.oy-P.y),d]).filter(q=>q[0]<420).sort((a,b)=>a[0]-b[0]).slice(0,10);
+  FX3.icons.forEach((s,i)=>{const q=L[i];if(!q||INT.active||P.glide){s.visible=false;return}const d=q[1];s.visible=true;s.material.map=FX3.iconTex[d.b.home?0:1];const nx=(d.ox-d.x)/14,ny=(d.oy-d.y)/14;s.position.set((d.x+nx*1.2)*S,groundH(d.x,d.y)+3+Math.sin(tsec*2+i)*.12,(d.y+ny*1.2)*S)})}
+// light pillars over power orbs so you can spot them from far away, plus minimap icons and a "nearest power" chip
+function orbBeams(){for(const o of FX3.orbs){if(o.x<-1e8){if(o.beam)o.beam.visible=false;continue}if(!o.beam){const c=o.k==='web'?0x19c3d1:o.k==='sky'?0xffb300:0x90caf9;o.beam=new THREE.Mesh(new THREE.CylinderGeometry(.35,.6,60,10,1,true),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.28,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,toneMapped:false}));scene.add(o.beam)}
+    o.beam.position.set(o.x*S,groundH(o.x,o.y)+30,o.y*S);o.beam.visible=!INT.active}}
+function powerChip(){let el=$('pchip');if(!el){el=document.createElement('div');el.id='pchip';el.style.cssText='position:absolute;left:calc(env(safe-area-inset-left) + 10px);top:calc(env(safe-area-inset-top) + 140px);font:800 12px system-ui;color:#fff;background:rgba(0,0,0,.5);padding:5px 10px;border-radius:12px;z-index:6;pointer-events:none';document.body.appendChild(el)}
+  let best=null,bd=1e9;for(const o of FX3.orbs){if(o.x<-1e8)continue;const d=Math.hypot(o.x-P.x,o.y-P.y);if(d<bd){bd=d;best=o}}
+  if(!best||P.power||INT.active){el.style.display='none';return}const turn=wrapA(Math.atan2(best.y-P.y,best.x-P.x)-(P.veh?P.veh.a:camYaw)),ar=Math.abs(turn)<.5?'⬆️':Math.abs(turn)>2.4?'⬇️':turn>0?'➡️':'⬅️';
+  el.style.display='block';el.textContent='⚡ Power '+POWERS[best.k].icon+' '+ar+' '+Math.round(bd*S)+' m'}
+const _dfm4=drawFriendsMM;drawFriendsMM=function(mmx,toM){_dfm4(mmx,toM);try{mmx.font='13px system-ui';mmx.textAlign='center';mmx.textBaseline='middle';
+  for(const o of FX3.orbs){if(o.x<-1e8)continue;const[a,b]=toM(o.x,o.y);mmx.fillStyle='rgba(0,0,0,.55)';mmx.beginPath();mmx.arc(a,b,8,0,TAU);mmx.fill();mmx.fillText(POWERS[o.k].icon,a,b+1)}
+  const C=FX3.crime||FX3.mission;if(C){const t=C.v&&!C.v.dead?C.v:(C.th&&C.th.find(p=>!p.dead))||C;const[a,b]=toM(t.x,t.y);mmx.fillStyle='rgba(220,20,30,.9)';mmx.beginPath();mmx.arc(a,b,8,0,TAU);mmx.fill();mmx.fillText('⚠️',a,b+1)}}catch(e){}};
 // ---------- per-frame + wiring ----------
-function fx3Tick(dt){try{powerTick(dt);syncSuit();if(INT.active){const al=$('alert');if(al)al.style.display='none'}if(!INT.active){orbsTick(dt);crimeTick(dt);callTick(dt);missionTick2(dt);seaTick(dt);shipTick()}
+function fx3Tick(dt){try{powerTick(dt);syncSuit();if(!INT.active){doorIcons();orbBeams()}powerChip();if(INT.active){const al=$('alert');if(al)al.style.display='none'}if(!INT.active){orbsTick(dt);crimeTick(dt);callTick(dt);missionTick2(dt);seaTick(dt);shipTick()}
   if(FX3.beam&&FX3.beamT>0){FX3.beamT-=dt;if(FX3.beamT<=0)FX3.beam.visible=false}
   // web line while swinging
   const g=P.glide;if(g&&g.mode==='swing'&&playerMesh){if(!FX3.line){FX3.line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:0xf2f2f2}));scene.add(FX3.line)}const p=FX3.line.geometry.attributes.position;p.setXYZ(0,P.x*S,g.alt+1.9,P.y*S);p.setXYZ(1,g.tx*S,groundH(g.tx,g.ty)+g.b.h+9,g.ty*S);p.needsUpdate=true;FX3.line.visible=true}else if(FX3.line)FX3.line.visible=false;
