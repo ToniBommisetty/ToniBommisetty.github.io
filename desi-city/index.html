@@ -1934,7 +1934,7 @@ function enterInterior(kind,door){if(INT.active)return;if(SIR)SIR.g.gain.value=0
   buildInterior(kind);INT.hero=makeHuman(heroParams());INT.scene.add(INT.hero);INT.px=0;INT.pz=INT.room.d/2-3.4;INT.a=-Math.PI/2;camYaw=-Math.PI/2;camPitch=.22;INT.snap=1;
   $('flight').style.display='none';closeShop();fadeFx();if(kind==='pub')pubMusic(true);missionEvent('enter_'+kind)}
 function buildInterior(kind){
-  const L=INT.lights;const amb=new THREE.HemisphereLight(0xffffff,0x444444,kind==='pub'?.25:kind==='theatre'?.35:kind==='temple'||kind==='bigtemple'?.35:1.1);L.add(amb);
+  const L=INT.lights;const amb=new THREE.HemisphereLight(0xffffff,0x444444,kind==='pub'?.25:kind==='theatre'?.35:kind==='temple'||kind==='bigtemple'?.35:.7);L.add(amb);
   if(kind==='pub'){iRoom(24,18,6,0x1a0f24,(g,w,h)=>{g.fillStyle='#120c16';g.fillRect(0,0,w,h);g.strokeStyle='#2a1d33';for(let i=0;i<w;i+=64){g.strokeRect(i,0,64,h)}});
     // dance floor tiles
     const tg=new THREE.PlaneGeometry(1.15,1.15);const tm=new THREE.MeshBasicMaterial({color:0xffffff});INT.mats.push(tm);const im=new THREE.InstancedMesh(tg,tm,80);let i=0;for(let x=0;x<10;x++)for(let z=0;z<8;z++){const m=new THREE.Matrix4().makeRotationX(-Math.PI/2);m.setPosition(-5.4+x*1.2,.02,-6+z*1.2);im.setMatrixAt(i,m);im.setColorAt(i++,new THREE.Color(1,0,1))}INT.g.add(im);INT.tiles=im;
@@ -3019,8 +3019,8 @@ function gfxRender(sc,cam){sc=sc||scene;cam=cam||camera;if(GFX.q!==QUAL||GFX.ret
   if(GFX.w!==VW||GFX.h!==VH||GFX.dpr!==DPR){GFX.w=VW;GFX.h=VH;GFX.dpr=DPR;GFX.comp.setPixelRatio(DPR);GFX.comp.setSize(VW,VH);const k=QUAL>=2?1:.5;GFX.bloom.setSize(VW*DPR*k,VH*DPR*k);if(GFX.gtao)GFX.gtao.setSize(Math.round(VW*DPR*.5),Math.round(VH*DPR*.5))}
   GFX.rp.scene=sc;GFX.rp.camera=cam;if(GFX.gtao&&(GFX.gtao.scene!==sc||GFX.gtao.camera!==cam)){GFX.gtao.scene=sc;GFX.gtao.camera=cam;GFX.gtao.setSize(Math.round(VW*DPR*.5),Math.round(VH*DPR*.5))}if(GFX.grade)GFX.grade.uniforms.vig.value=sc===scene?.32:.22;
   // bloom: subtle by day, stronger at night so windows, signs, lamps and neon glow
-  const n=sc===scene?night:.6;GFX.bloom.strength=.18+.62*n;GFX.bloom.threshold=.92-.22*n;GFX.bloom.radius=.4;
-  if(RETRO){GFX.bloom.strength=.22+.6*n;GFX.bloom.threshold=.88-.2*n;GFX.bloom.radius=.6;if(GFX.grade){const u=GFX.grade.uniforms;u.sat.value=1.3;u.con.value=1.12;u.warm.value=.05;u.vig.value=.3;u.pink.value=sc===scene?.15+.8*n:.2}if(GFX.trails)GFX.trails.uniforms.damp.value=P.veh&&Math.abs(P.veh.spd||0)>40?.6:.42}
+  const n=sc===scene?night:.15;renderer.toneMappingExposure=sc===scene?1:.8;GFX.bloom.strength=.18+.62*n;GFX.bloom.threshold=.92-.22*n;GFX.bloom.radius=.4;
+  if(RETRO){GFX.bloom.strength=.22+.6*n;GFX.bloom.threshold=.88-.2*n;GFX.bloom.radius=.6;if(GFX.grade){const u=GFX.grade.uniforms;u.sat.value=1.3;u.con.value=1.12;u.warm.value=.05;u.vig.value=.3;u.pink.value=sc===scene?.15+.8*n:.05}if(GFX.trails)GFX.trails.uniforms.damp.value=P.veh&&Math.abs(P.veh.spd||0)>40?.6:.42}
   else if(GFX.grade){const u=GFX.grade.uniforms;u.sat.value=1.12;u.con.value=1.06;u.warm.value=.02;u.pink.value=0}
   GFX.comp.render()}
 
