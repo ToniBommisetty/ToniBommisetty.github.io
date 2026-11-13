@@ -99,6 +99,7 @@ With powers come missions:
 
 - Map data © OpenStreetMap contributors (ODbL).
 - India state outlines: @svg-maps/india by Victor Cazanave (CC BY 4.0).
+- Sports car model: "Ferrari 458 Italia" by vicent091036 (CC BY 4.0), via the three.js examples.
 - three.js (MIT), Trystero (MIT).
 
 ## Author
