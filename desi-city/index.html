@@ -1056,7 +1056,7 @@ const groundY=(x,y)=>{const t=tileAt(x,y);return t===SW?0:0};
 
 // ---------- camera ----------
 let camYaw=-Math.PI/2,camPitch=.3,lastLook=-1e9;const camPos=new THREE.Vector3(),camTgt=new THREE.Vector3();
-const SKY_STD={dayTop:'#2f7fd6',dayBot:'#d6ebf8',duskTop:'#3b4f8f',duskBot:'#ffab6b',nightTop:'#050a1c',nightBot:'#18223f'},SKY_RETRO={dayTop:'#3c8fe8',dayBot:'#ffd9bd',duskTop:'#5a44a6',duskBot:'#ff5d9e',nightTop:'#0c0928',nightBot:'#4b1f63'};
+const SKY_STD={dayTop:'#2f7fd6',dayBot:'#d6ebf8',duskTop:'#3b4f8f',duskBot:'#ffab6b',nightTop:'#050a1c',nightBot:'#18223f'},SKY_RETRO={dayTop:'#3c8fe8',dayBot:'#d9ecf7',duskTop:'#3b4f8f',duskBot:'#ffab6b',nightTop:'#060b1e',nightBot:'#1c2742'};
 const skyC={};function applySkyPalette(){const p=RETRO?SKY_RETRO:SKY_STD;for(const k in p)(skyC[k]||(skyC[k]=new THREE.Color())).set(p[k])}applySkyPalette();
 function lerpA(a,b,k){return a+wrapA(b-a)*Math.min(1,k)}
 function render3D(dt){
@@ -3200,7 +3200,7 @@ function gfxRender(sc,cam){sc=sc||scene;cam=cam||camera;if(GFX.q!==QUAL||GFX.ret
   GFX.rp.scene=sc;GFX.rp.camera=cam;if(GFX.gtao&&(GFX.gtao.scene!==sc||GFX.gtao.camera!==cam)){GFX.gtao.scene=sc;GFX.gtao.camera=cam;GFX.gtao.setSize(Math.round(VW*DPR*.5),Math.round(VH*DPR*.5))}if(GFX.grade)GFX.grade.uniforms.vig.value=sc===scene?.32:.22;
   // bloom: subtle by day, stronger at night so windows, signs, lamps and neon glow
   const n=sc===scene?night:.15;renderer.toneMappingExposure=sc===scene?1:.8;GFX.bloom.strength=.18+.62*n;GFX.bloom.threshold=.92-.22*n;GFX.bloom.radius=.4;
-  if(RETRO){GFX.bloom.strength=.22+.6*n;GFX.bloom.threshold=.88-.2*n;GFX.bloom.radius=.6;if(GFX.grade){const u=GFX.grade.uniforms;u.sat.value=1.3;u.con.value=1.12;u.warm.value=.05;u.vig.value=.3;u.pink.value=sc===scene?.15+.8*n:.05}if(GFX.trails)GFX.trails.uniforms.damp.value=P.veh&&Math.abs(P.veh.spd||0)>40?.6:.42}
+  if(RETRO){GFX.bloom.strength=.22+.6*n;GFX.bloom.threshold=.88-.2*n;GFX.bloom.radius=.6;if(GFX.grade){const u=GFX.grade.uniforms;u.sat.value=1.2;u.con.value=1.06;u.warm.value=.02;u.vig.value=.22;u.pink.value=0}if(GFX.trails)GFX.trails.uniforms.damp.value=P.veh&&Math.abs(P.veh.spd||0)>40?.6:.42}
   else if(GFX.grade){const u=GFX.grade.uniforms;u.sat.value=1.12;u.con.value=1.06;u.warm.value=.02;u.pink.value=0}
   GFX.comp.render()}
 
