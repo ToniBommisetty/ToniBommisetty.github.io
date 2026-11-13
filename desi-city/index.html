@@ -1862,7 +1862,7 @@ function buildDeco3D(G,PB,GB){W.flys=[];buildHills3D(G);for(const f of(W.deco||[
       const sx=X0+.6,sz=Z0+.6;addGeo(PB,GCYL6,M(sx,1.4,sz,0,0,0,.06,2.8,.06),C('#888'));labelPlane(G,'P','#1e5bd8','#ffffff',1.1,sx,2.9,sz+.08,0,1);if(L2>9)labelPlane(G,'🏍️ BIKES','#1e5bd8','#ffffff',2,wide?X0+L1/2:X0+3,.06,wide?Z0+3:Z0+L1/2,0,4).rotation.set(-Math.PI/2,0,0)}
     else if(f.k==='golf'&&f.pp){golfDeco3D(G,PB,f)}
     else if(f.k==='pump'&&f.p0){pump3D(G,PB,f)}
-    else if(f.k==='gully'&&f.p0){const x=f.p0[0]*S,z=f.p0[1]*S,ca=f.d[0],sa=-f.d[1];for(const off of[-5.6,5.6])for(const w of[-.1,0,.1])addGeo(PB,GCYL6,M(x+ca*off-sa*w,.3,z+sa*off+ca*w,0,0,0,.025,.6,.025),C('#d7b98a'))}
+    else if(f.k==='gully'&&f.p0&&false){const x=f.p0[0]*S,z=f.p0[1]*S,ca=f.d[0],sa=-f.d[1];for(const off of[-5.6,5.6])for(const w of[-.1,0,.1])addGeo(PB,GCYL6,M(x+ca*off-sa*w,.3,z+sa*off+ca*w,0,0,0,.025,.6,.025),C('#d7b98a'))}
     else if(f.k==='busstop'&&f.p0){const x=f.p0[0]*S,z=f.p0[1]*S;const rc=m2px(f.rc[0],f.rc[1]);let nx=rc[0]*S-x,nz=rc[1]*S-z;const nl=Math.hypot(nx,nz)||1;nx/=nl;nz/=nl;const ry=Math.atan2(nx,nz);const tx=-nz,tz=nx;
       for(const s2 of[-1.6,1.6]){addGeo(PB,GCYL6,M(x+tx*s2-nx*.2,1.3,z+tz*s2-nz*.2,0,0,0,.06,2.6,.06),C('#7f8c8d'));addGeo(PB,GCYL6,M(x+tx*s2-nx*1.5,1.3,z+tz*s2-nz*1.5,0,0,0,.06,2.6,.06),C('#7f8c8d'))}
       addGeo(PB,BOX1,M(x-nx*.85,2.65,z-nz*.85,0,ry,0,3.6,.1,1.9),C('#2e86c1'));addGeo(GB,BOX1,M(x-nx*1.55,1.4,z-nz*1.55,0,ry,0,3.4,1.8,.05),C('#cfe8f7'));addGeo(PB,BOX1,M(x-nx*1.25,.5,z-nz*1.25,0,ry,0,3,.08,.45),C('#7f8c8d'));
@@ -2669,7 +2669,7 @@ function pumpers(){let n=0;for(const p of peds)if(p.kind==='pumper')n++;if(n>=3)
 
 // gully cricket with kids
 const GULLY={balls:new Map()};
-function gullyKids(){let n=0;for(const p of peds)if(p.kind==='kid')n++;if(n>=8)return;for(const f of W.deco||[]){if(f.k!=='gully'||!f.p0)continue;const d=Math.hypot(f.p0[0]-P.x,f.p0[1]-P.y);if(d>650||d<80)continue;if(peds.some(p=>p.kind==='kid'&&p.gid===f.i))continue;
+function gullyKids(){return;let n=0;for(const p of peds)if(p.kind==='kid')n++;if(n>=8)return;for(const f of W.deco||[]){if(f.k!=='gully'||!f.p0)continue;const d=Math.hypot(f.p0[0]-P.x,f.p0[1]-P.y);if(d>650||d<80)continue;if(peds.some(p=>p.kind==='kid'&&p.gid===f.i))continue;
   const[dx,dy]=f.d;const a=Math.atan2(-dy,dx);const mk=(off,side,pose)=>{const x=f.p0[0]+Math.cos(a)*off*8+Math.cos(a+Math.PI/2)*side*8,y=f.p0[1]+Math.sin(a)*off*8+Math.sin(a+Math.PI/2)*side*8;peds.push(makePed(x,y,{kind:'kid',kid:true,gid:f.i,state:'walk',hp:30,pose,a:pose==='bat'?a+Math.PI:a,seed:rand()*6,shirt:rpick(['#e74c3c','#f1c40f','#3498db','#2ecc71','#ecf0f1','#9b59b6']),pants:'#2d3436'}))};
   mk(-5,0,'bat');mk(5,0,'bowl');mk(1,2.2,'stand');mk(-2,-2.4,'stand');GULLY.balls.set(f.i,{f,a,t:rand()*3});return}}
 function gullyRender(dt){for(const[k,g]of GULLY.balls){const f=g.f;if(!f.p0||Math.hypot(f.p0[0]-P.x,f.p0[1]-P.y)>800){if(g.m){scene.remove(g.m)}GULLY.balls.delete(k);continue}
