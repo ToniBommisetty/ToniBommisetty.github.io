@@ -157,7 +157,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#111;font-family:-appl
 import * as THREE from "three";
 import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
-import {toCreasedNormals} from "three/addons/utils/BufferGeometryUtils.js";
+import {toCreasedNormals,mergeGeometries} from "three/addons/utils/BufferGeometryUtils.js";
+import {RoundedBoxGeometry} from "three/addons/geometries/RoundedBoxGeometry.js";
 import {EffectComposer} from "three/addons/postprocessing/EffectComposer.js";
 import {RenderPass} from "three/addons/postprocessing/RenderPass.js";
 import {UnrealBloomPass} from "three/addons/postprocessing/UnrealBloomPass.js";
@@ -2567,7 +2568,221 @@ const _vet6=vehExtraTick;vehExtraTick=function(v,o){car6Sync();_vet6(v,o);const 
  if(u.custom&&CAR6&&u.customSrc===CAR6[v.type]){const key=(v.dead?'d':'')+v.col+QUAL;if(u.tint6!==key){u.tint6=key;const pm=paint6(v.col,v.dead);u.custom.traverse(m=>{if(m.isMesh&&m.userData.cat6==='paint')m.material=pm});}}};
 const _vet6b=vehExtraTick;vehExtraTick=function(v,o){_vet6b(v,o);const u=o.userData;if(u.custom)u.custom.visible=!v.dead};
 async function fx6Init(){CAR6=await car6Load();car6Sync()}
-function extrasInit(){if(window.__exi)return;window.__exi=1;onlineInit();fxInit();fx3Init();try{fx6Init()}catch(e){}modelsInit();
+
+// ===== fx7: detailed built-in models for bikes, scooters, Bullets, autos, bullock carts, trucks, tempos and buses =====
+const V7={};
+const M7={
+ rubber:new THREE.MeshStandardMaterial({color:0x121212,roughness:.92}),
+ rim:new THREE.MeshStandardMaterial({color:0xc9ccd1,metalness:1,roughness:.28}),
+ chrome:new THREE.MeshStandardMaterial({color:0xeeeeee,metalness:1,roughness:.12,envMapIntensity:1.6}),
+ dark:new THREE.MeshStandardMaterial({color:0x1b1c1e,metalness:.3,roughness:.6}),
+ engine:new THREE.MeshStandardMaterial({color:0x6d7075,metalness:.8,roughness:.38}),
+ leather:new THREE.MeshStandardMaterial({color:0x1a1411,roughness:.55}),
+ glass:new THREE.MeshStandardMaterial({color:0x0e161e,metalness:.9,roughness:.04,transparent:true,opacity:.62,envMapIntensity:1.6}),
+ hl:new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xfff2cc,emissiveIntensity:.9,roughness:.1}),
+ tl:new THREE.MeshStandardMaterial({color:0x550000,emissive:0xff2020,emissiveIntensity:1,roughness:.3}),
+ amber:new THREE.MeshStandardMaterial({color:0x664000,emissive:0xff9900,emissiveIntensity:.8,roughness:.3}),
+ canopy:new THREE.MeshStandardMaterial({color:0xf2c014,roughness:.55}),
+ wood:new THREE.MeshStandardMaterial({color:0x8a5a2b,roughness:.85}),
+ woodDk:new THREE.MeshStandardMaterial({color:0x5a3818,roughness:.9}),
+ ox:new THREE.MeshStandardMaterial({color:0xece4d6,roughness:.85}),
+ horn:new THREE.MeshStandardMaterial({color:0x3a2a1a,roughness:.6}),
+ tarp:new THREE.MeshStandardMaterial({color:0x1f5fa8,roughness:.9}),
+ white:new THREE.MeshStandardMaterial({color:0xf2f2ee,roughness:.45,metalness:.1}),
+ yellow:new THREE.MeshStandardMaterial({color:0xf5c518,roughness:.4,metalness:.2}),
+ red:new THREE.MeshStandardMaterial({color:0xc0392b,roughness:.45}),
+ green:new THREE.MeshStandardMaterial({color:0x27ae60,roughness:.45}),
+ blue:new THREE.MeshStandardMaterial({color:0x2271b3,roughness:.45}),
+ paint:new THREE.MeshStandardMaterial({color:0x888888,roughness:.3,metalness:.5})};
+// painted art for the back of trucks and the bus destination board
+function art7(w,h,f){const c=document.createElement('canvas');c.width=w;c.height=h;f(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t}
+M7.truckBack=new THREE.MeshStandardMaterial({roughness:.7,map:art7(256,256,(g,w,h)=>{g.fillStyle='#f39c12';g.fillRect(0,0,w,h);
+ const band=(y,c)=>{g.fillStyle=c;g.fillRect(0,y,w,22)};band(8,'#c0392b');band(226,'#27ae60');
+ g.fillStyle='#fff';g.strokeStyle='#1b2a6b';g.lineWidth=5;g.font='900 40px Arial Black,Arial';g.textAlign='center';
+ g.strokeText('HORN',w/2,80);g.fillText('HORN',w/2,80);g.strokeText('OK',w/2,128);g.fillText('OK',w/2,128);g.strokeText('PLEASE',w/2,176);g.fillText('PLEASE',w/2,176);
+ g.font='bold 18px Arial';g.fillStyle='#1b2a6b';g.fillText('🪷  USE DIPPER AT NIGHT  🪷',w/2,212);
+ for(let i=0;i<8;i++){g.fillStyle=['#e74c3c','#2980b9','#27ae60','#8e44ad'][i%4];g.beginPath();g.arc(16+i*32,42,7,0,7);g.fill()}})});
+M7.truckVisor=new THREE.MeshStandardMaterial({roughness:.6,map:art7(256,64,(g,w,h)=>{g.fillStyle='#f5c518';g.fillRect(0,0,w,h);for(let i=0;i<16;i++){g.fillStyle=['#c0392b','#27ae60','#2980b9','#8e44ad'][i%4];g.beginPath();g.moveTo(i*16,h);g.lineTo(i*16+8,h-22);g.lineTo(i*16+16,h);g.fill()}
+ g.fillStyle='#c0392b';g.font='bold 22px Arial';g.textAlign='center';g.fillText('JAI HANUMAN',w/2,28)})});
+M7.busBoard=new THREE.MeshStandardMaterial({color:0x111111,emissive:0xffffff,emissiveIntensity:.9,emissiveMap:art7(256,48,(g,w,h)=>{g.fillStyle='#000';g.fillRect(0,0,w,h);g.fillStyle='#ffb000';g.font='bold 30px monospace';g.textAlign='center';g.fillText('TIRUPATI',w/2,35)})});
+
+const RB7=new Map();
+function rb7(w,h,d,r){const k=[w,h,d,r].map(v=>v.toFixed(3)).join();if(!RB7.has(k))RB7.set(k,new RoundedBoxGeometry(w,h,d,2,Math.min(r,w/2-.001,h/2-.001,d/2-.001)));return RB7.get(k)}
+const G7={cyl:new THREE.CylinderGeometry(1,1,1,16),cyl8:new THREE.CylinderGeometry(1,1,1,8),sph:new THREE.SphereGeometry(1,16,12),cone:new THREE.ConeGeometry(1,1,10),
+ tire:new THREE.TorusGeometry(1,.32,10,24),ring:new THREE.TorusGeometry(1,.05,6,28),box:new THREE.BoxGeometry(1,1,1),caps:new THREE.CapsuleGeometry(1,1,6,12),halfTorus:new THREE.TorusGeometry(1,.06,6,16,Math.PI)};
+const _m7=new THREE.Matrix4(),_q7=new THREE.Quaternion(),_e7=new THREE.Euler(),_v7=new THREE.Vector3(),_s7=new THREE.Vector3();
+function mat7(x,y,z,rx=0,ry=0,rz=0,sx=1,sy=1,sz=1){_e7.set(rx,ry,rz);_q7.setFromEuler(_e7);return new THREE.Matrix4().compose(_v7.set(x,y,z),_q7,_s7.set(sx,sy,sz))}
+// collects pieces and merges them into one mesh per material (few draw calls per vehicle)
+class MB7{constructor(){this.parts=new Map()}
+ add(geo,mat,m){if(!this.parts.has(mat))this.parts.set(mat,[]);const g=(geo.index?geo.toNonIndexed():geo.clone());g.applyMatrix4(m);for(const k of Object.keys(g.attributes))if(!['position','normal','uv'].includes(k))g.deleteAttribute(k);if(!g.attributes.uv)g.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(g.attributes.position.count*2),2));this.parts.get(mat).push(g);return this}
+ box(mat,x,y,z,w,h,d,r=0,rx=0,ry=0,rz=0){return this.add(r>0?rb7(w,h,d,r):G7.box,mat,r>0?mat7(x,y,z,rx,ry,rz):mat7(x,y,z,rx,ry,rz,w,h,d))}
+ cylX(mat,x,y,z,r,len,seg8){return this.add(seg8?G7.cyl8:G7.cyl,mat,mat7(x,y,z,0,0,Math.PI/2,r,len,r))}
+ cylZ(mat,x,y,z,r,len,seg8){return this.add(seg8?G7.cyl8:G7.cyl,mat,mat7(x,y,z,Math.PI/2,0,0,r,len,r))}
+ cylY(mat,x,y,z,r,len,seg8){return this.add(seg8?G7.cyl8:G7.cyl,mat,mat7(x,y,z,0,0,0,r,len,r))}
+ tube(mat,a,b,r){const d=new THREE.Vector3().subVectors(b,a),L=d.length();const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());const m=new THREE.Matrix4().compose(new THREE.Vector3().addVectors(a,b).multiplyScalar(.5),q,new THREE.Vector3(r,L,r));return this.add(G7.cyl8,mat,m)}
+ sph(mat,x,y,z,sx,sy,sz,rx=0,ry=0,rz=0){return this.add(G7.sph,mat,mat7(x,y,z,rx,ry,rz,sx,sy,sz))}
+ // wheel lying in the XY plane, axle along Z
+ wheel(x,y,z,r,w,spokes){const R=r/1.32;this.add(G7.tire,M7.rubber,mat7(x,y,z,0,0,0,R,R,(w/2)/(.32*R)));
+  if(spokes){this.cylZ(M7.rim,x,y,z,r*.14,w*.9,1);this.add(G7.ring,M7.rim,mat7(x,y,z,0,0,0,r*.7,r*.7,.6));for(let i=0;i<spokes;i++){const a=i/spokes*Math.PI*2;this.tube(M7.rim,new THREE.Vector3(x,y,z),new THREE.Vector3(x+Math.cos(a)*r*.68,y+Math.sin(a)*r*.68,z),.006)}}
+  else{this.cylZ(M7.rim,x,y,z,r*.6,w*.72);this.cylZ(M7.dark,x,y,z+(z>=0?1:-1)*w*.37,r*.2,.02)}return this}
+ build(){const g=new THREE.Group();for(const[mat,list]of this.parts){const geo=mergeGeometries(list,false);geo.computeBoundingSphere();const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.receiveShadow=true;if(mat===M7.paint)m.userData.cat6='paint';g.add(m)}return g}}
+const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+
+// ---- motorbike (also Bullet) ----
+function mkBike7(bullet){const B=new MB7(),l=bullet?2.2:2.1,r=bullet?.34:.32,fx=l*.36,rx=-l*.36;
+ B.wheel(fx,r,0,r,.1,bullet?24:0).wheel(rx,r,0,r,.11,bullet?24:0);
+ if(!bullet){for(const z of[.06,-.06]){B.cylZ(M7.rim,fx,r,z,r*.6,.012);B.cylZ(M7.rim,rx,r,z,r*.6,.012)}}
+ // forks + handlebar
+ for(const z of[.09,-.09])B.tube(M7.chrome,V3(fx,r,z),V3(fx-.2,1.0,z),.024);
+ B.box(M7.dark,fx-.22,1.02,0,.12,.09,.24,.03);B.tube(M7.chrome,V3(fx-.24,1.12,-.36),V3(fx-.24,1.12,.36),.016);
+ for(const z of[.36,-.36])B.cylX(M7.leather,fx-.26,1.12,z*1.08,.024,.12);
+ for(const z of[.3,-.3]){B.tube(M7.chrome,V3(fx-.26,1.12,z),V3(fx-.3,1.32,z*1.15),.007);B.sph(M7.chrome,fx-.3,1.34,z*1.15,.05,.035,.012)}
+ // headlight
+ if(bullet){B.sph(M7.paint,fx-.12,1.02,0,.15,.13,.15);B.cylX(M7.chrome,fx+.02,1.02,0,.12,.04);B.cylX(M7.hl,fx+.045,1.02,0,.1,.01);for(const z of[.13,-.13])B.sph(M7.amber,fx-.08,1.0,z,.03,.03,.03)}
+ else{B.cylX(M7.chrome,fx-.08,1.0,0,.09,.07);B.cylX(M7.hl,fx-.04,1.0,0,.075,.01);B.box(M7.paint,fx-.16,1.1,0,.12,.14,.2,.04)}
+ // front mudguard
+ B.add(G7.halfTorus,bullet?M7.paint:M7.dark,mat7(fx,r,0,0,0,-.15,r+.05,r+.05,1.2));
+ // frame
+ B.tube(M7.dark,V3(fx-.2,.98,0),V3(-.25,.82,0),.03);B.tube(M7.dark,V3(fx-.2,.95,0),V3(.05,.38,0),.032);B.tube(M7.dark,V3(.05,.38,0),V3(rx,r,0),.025);
+ for(const z of[.09,-.09])B.tube(bullet?M7.chrome:M7.dark,V3(rx,r,z),V3(-.35,.86,z),.02);
+ // tank
+ if(bullet){B.sph(M7.paint,.2,.93,0,.34,.15,.17);B.sph(M7.chrome,.22,.95,.155,.1,.05,.02);B.sph(M7.chrome,.22,.95,-.155,.1,.05,.02);B.box(M7.chrome,.18,1.075,0,.4,.015,.03)}
+ else{B.sph(M7.paint,.22,.93,0,.32,.14,.17,0,0,-.12);B.box(M7.paint,-.2,.78,0,.36,.12,.16,.05)}
+ // engine
+ B.box(M7.engine,.02,.5,0,.42,.32,.24,.06);for(let i=0;i<5;i++)B.box(M7.engine,.08,.68+i*.045,0,.2,.02,.26,.008);B.cylZ(M7.chrome,-.05,.42,.14,.11,.04);
+ // exhaust
+ B.tube(M7.chrome,V3(.08,.5,.12),V3(-.2,.3,.17),.03);B.tube(M7.chrome,V3(-.2,.3,.17),V3(rx-.25,.38,.17),.04);if(bullet)B.cylX(M7.chrome,rx-.15,.38,.17,.055,.5);
+ // seat
+ if(bullet){B.box(M7.leather,-.25,.92,0,.36,.08,.26,.04);for(const z of[.07,-.07])B.cylY(M7.chrome,-.38,.84,z,.015,.12);B.box(M7.leather,-.6,.88,0,.3,.07,.22,.03)}
+ else B.box(M7.leather,-.32,.9,0,.62,.09,.27,.04);
+ // rear fender + light
+ B.add(G7.halfTorus,bullet?M7.paint:M7.dark,mat7(rx,r,0,0,0,.25,r+.05,r+.05,1.3));B.box(M7.tl,rx-.25,.78,0,.03,.05,.1);B.box(M7.dark,rx-.18,.72,0,.18,.12,.14,.02);
+ for(const z of[.1,-.1])B.sph(M7.amber,rx-.22,.74,z*1.6,.025,.025,.025);
+ // side covers
+ for(const z of[.12,-.12])B.box(bullet?M7.paint:M7.dark,-.2,.65,z,.24,.18,.03,.03);
+ return B.build()}
+
+// ---- scooter ----
+function mkScooter7(){const B=new MB7(),l=1.8,r=.26,fx=l*.36,rx=-l*.36;
+ B.wheel(fx,r,0,r,.11).wheel(rx,r,0,r,.12);
+ B.box(M7.paint,fx-.08,.72,0,.18,.8,.42,.07,0,0,-.18);B.box(M7.dark,fx-.2,.6,0,.08,.6,.36,.04,0,0,-.18);
+ B.box(M7.paint,fx,.56,0,.36,.12,.2,.05);
+ B.box(M7.dark,-.05,.32,0,.9,.06,.36,.02);
+ B.sph(M7.paint,-.42,.55,0,.42,.26,.21);B.box(M7.paint,-.42,.42,0,.7,.2,.38,.08);
+ B.box(M7.leather,-.38,.84,0,.62,.1,.3,.05);
+ B.tube(M7.dark,V3(fx-.12,.9,0),V3(fx-.2,1.16,0),.03);B.box(M7.paint,fx-.21,1.18,0,.16,.1,.5,.04);B.cylX(M7.hl,fx-.12,1.18,0,.06,.02);
+ for(const z of[.27,-.27])B.cylX(M7.leather,fx-.22,1.19,z,.022,.12);
+ for(const z of[.2,-.2]){B.tube(M7.chrome,V3(fx-.22,1.22,z),V3(fx-.24,1.38,z*1.3),.007);B.sph(M7.chrome,fx-.24,1.4,z*1.3,.04,.03,.01)}
+ B.box(M7.hl,fx+.02,.8,0,.03,.12,.14,.02);for(const z of[.16,-.16])B.sph(M7.amber,fx+.0,.94,z,.03,.025,.03);
+ B.box(M7.tl,-.84,.62,0,.04,.07,.18,.02);B.tube(M7.chrome,V3(-.4,.25,.16),V3(-.85,.32,.16),.035);
+ return B.build()}
+
+// ---- auto-rickshaw ----
+function mkAuto7(L,Wd){const B=new MB7(),Wa=Wd*.78,fx=L*.36,rx=-L*.3,r=.24,wz=Wa/2-.08;
+ B.wheel(fx,r,0,r,.14).wheel(rx,r,wz,r,.15).wheel(rx,r,-wz,r,.15);
+ B.box(M7.dark,-L*.05,.42,0,L*.85,.12,Wa*.94,.04);
+ // lower body tub + front cowl in body colour
+ B.box(M7.paint,-L*.12,.66,0,L*.62,.36,Wa,.08);B.box(M7.paint,-L*.39,.86,0,L*.2,.78,Wa*1.01,.1);
+ B.box(M7.paint,L*.3,.86,0,L*.22,.86,Wa*.5,.14);B.box(M7.paint,L*.22,.62,0,L*.12,.3,Wa*.8,.06);
+ B.add(G7.halfTorus,M7.paint,mat7(fx,r,0,0,0,0,r+.08,r+.08,2.2));
+ B.cylX(M7.chrome,L*.42,1.08,0,.1,.06);B.cylX(M7.hl,L*.445,1.08,0,.085,.01);for(const z of[.2,-.2])B.sph(M7.amber,L*.4,.95,z,.035,.03,.035);
+ B.box(M7.yellow,L*.41,.78,0,.02,.08,Wa*.44,.01);
+ // windscreen + frame
+ B.box(M7.glass,L*.2,1.4,0,.03,.62,Wa*.72,.01);B.box(M7.dark,L*.2,1.72,0,.06,.06,Wa*.78,.02);B.box(M7.dark,L*.2,1.1,0,.06,.06,Wa*.78,.02);
+ for(const z of[1,-1]){B.tube(M7.dark,V3(L*.2,1.1,z*Wa*.39),V3(L*.17,1.82,z*Wa*.47),.025);B.tube(M7.dark,V3(-L*.36,1.25,z*Wa*.49),V3(-L*.36,1.82,z*Wa*.49),.025)}
+ // canopy (yellow) with curved front and back
+ B.box(M7.canopy,-L*.08,1.86,0,L*.64,.1,Wa*1.04,.05);B.cylZ(M7.canopy,L*.23,1.79,0,.12,Wa*1.04);B.box(M7.canopy,-L*.405,1.5,0,.12,.8,Wa*1.04,.05);
+ B.box(M7.canopy,-L*.36,1.1,0,.05,.3,Wa*1.02,.02);
+ for(const z of[1,-1])B.box(M7.dark,-L*.1,1.8,z*Wa*.52,L*.5,.04,.03,.01);
+ // seats
+ B.box(M7.leather,-L*.2,.92,0,L*.16,.14,Wa*.86,.05);B.box(M7.leather,-L*.31,1.22,0,.1,.48,Wa*.86,.04);
+ B.box(M7.leather,L*.08,.98,0,L*.12,.12,Wa*.3,.04);
+ // handlebar
+ B.tube(M7.chrome,V3(L*.17,1.2,-.32),V3(L*.17,1.2,.32),.018);B.tube(M7.dark,V3(L*.17,1.2,0),V3(L*.27,.95,0),.03);
+ // tail lights + number plate
+ for(const z of[1,-1])B.box(M7.tl,-L*.495,.75,z*Wa*.38,.02,.08,.12,.01);B.box(M7.white,-L*.495,.6,0,.02,.12,.3,.01);
+ B.box(M7.white,-L*.11,.66,Wa/2+.005,L*.5,.05,.01);B.box(M7.white,-L*.11,.66,-Wa/2-.005,L*.5,.05,.01);
+ return B.build()}
+
+// ---- bullock cart with two oxen ----
+function mkCart7(L,Wv){const B=new MB7(),wx=-L*.22,wz=Wv/2+.08;
+ for(const z of[wz,-wz]){B.add(G7.ring,M7.woodDk,mat7(wx,.75,z,0,0,0,.7,.7,1.6));B.cylZ(M7.woodDk,wx,.75,z,.13,.22);for(let i=0;i<12;i++){const a=i/12*Math.PI*2;B.tube(M7.wood,V3(wx,.75,z),V3(wx+Math.cos(a)*.68,.75+Math.sin(a)*.68,z),.03)}}
+ B.cylZ(M7.dark,wx,.75,0,.05,Wv+.3);
+ B.box(M7.wood,-L*.22,1.08,0,L*.42,.08,Wv*.95,.01);for(let i=0;i<7;i++)B.box(M7.woodDk,-L*.22-L*.18+i*L*.06,1.13,0,.03,.02,Wv*.95);
+ for(const z of[1,-1]){B.box(M7.wood,-L*.22,1.4,z*Wv*.46,L*.42,.06,.05);B.box(M7.wood,-L*.22,1.6,z*Wv*.46,L*.42,.06,.05);for(let i=0;i<8;i++)B.cylY(M7.wood,-L*.43+i*L*.06,1.35,z*Wv*.46,.025,.55,1)}
+ B.box(M7.wood,-L*.43,1.4,0,.05,.5,Wv*.95);
+ // hay load
+ B.sph(new THREE.MeshStandardMaterial({color:0xc9a54a,roughness:1}),-L*.25,1.35,0,L*.16,.32,Wv*.38);
+ for(const z of[.4,-.4])B.tube(M7.woodDk,V3(-L*.02,1.08,z),V3(L*.22,1.2,z*.3),.05);
+ B.cylZ(M7.woodDk,L*.2,1.42,0,.06,Wv*1.1);
+ for(const z of[.55,-.55]){const ox=L*.28;
+  B.add(G7.caps,M7.ox,mat7(ox,1.05,z,0,0,Math.PI/2,.36,1.0,.33));B.sph(M7.ox,ox+.45,1.45,z,.24,.22,.2);
+  B.box(M7.ox,ox+.98,1.2,z,.46,.32,.28,.1,0,0,-.35);B.box(M7.horn,ox+1.2,1.1,z,.12,.12,.2,.04,0,0,-.35);
+  for(const s of[1,-1])B.add(G7.cone,M7.horn,mat7(ox+.9,1.48,z+s*.13,s*.5,0,.25,.035,.3,.035));
+  for(const dx of[.5,-.5])for(const dz of[.15,-.15])B.cylY(M7.ox,ox+dx,.42,z+dz,.065,.84,1);
+  B.tube(M7.ox,V3(ox-.75,1.2,z),V3(ox-.85,.7,z),.03);B.box(M7.red,ox+.05,1.42,z,.5,.05,.42,.02)}
+ return B.build()}
+
+// ---- lorry / truck ----
+function mkTruck7(L,Wv){const B=new MB7(),cabX=L/2-1.15;
+ for(const sx of[.36,-.2,-.36])for(const sz of[1,-1]){const z=sz*(Wv/2-.2);B.wheel(sx*L,.5,z,.5,.32);if(sx<0)B.wheel(sx*L,.5,z-sz*.34,.5,.3)}
+ B.box(M7.dark,0,.62,0,L*.98,.2,Wv*.6,.03);
+ // cab
+ B.box(M7.paint,cabX,1.32,0,2.3,1.65,Wv,.12);B.box(M7.paint,cabX-.1,2.3,0,2.1,.4,Wv*.98,.12);
+ B.box(M7.glass,L/2+.02,1.92,0,.04,.72,Wv*.86,.02);for(const z of[1,-1])B.box(M7.glass,cabX+.3,1.9,z*(Wv/2+.005),1.0,.6,.02,.02);
+ B.box(M7.truckVisor,L/2+.06,2.42,0,.06,.3,Wv*.98,.02);
+ B.box(M7.chrome,L/2+.05,1.1,0,.04,.55,Wv*.6,.02);for(let i=0;i<5;i++)B.box(M7.dark,L/2+.07,.9+i*.1,0,.01,.03,Wv*.56);
+ for(const z of[1,-1]){B.cylX(M7.chrome,L/2+.05,.95,z*Wv*.38,.13,.05);B.cylX(M7.hl,L/2+.08,.95,z*Wv*.38,.11,.01);B.sph(M7.amber,L/2+.04,.75,z*Wv*.42,.04,.04,.06);
+  B.tube(M7.dark,V3(L/2-.2,2.1,z*Wv/2),V3(L/2+.15,2.0,z*(Wv/2+.25)),.02);B.box(M7.dark,L/2+.15,1.85,z*(Wv/2+.27),.04,.35,.18,.02)}
+ B.box(M7.dark,L/2+.1,.55,0,.15,.22,Wv*1.02,.04);
+ // cargo body: wooden box painted in bands, tarp on top, art at the back
+ const bx=-1.3,bl=L-2.6;B.box(M7.wood,bx,1.55,0,bl,1.8,Wv,.04);
+ for(const[y,m]of[[.75,M7.yellow],[1.55,M7.green],[2.38,M7.red]])B.box(m,bx,y,0,bl+.02,.14,Wv+.03,.02);
+ for(let i=0;i<=8;i++)for(const z of[1,-1])B.box(M7.woodDk,bx-bl/2+i*bl/8,1.55,z*(Wv/2+.012),.06,1.8,.02);
+ B.box(M7.tarp,bx,2.62,0,bl*.98,.34,Wv*.96,.16);
+ B.box(M7.truckBack,-L/2-.01,1.6,0,.04,1.7,Wv*.95,.01);
+ for(const z of[1,-1]){B.box(M7.tl,-L/2-.04,.8,z*Wv*.38,.04,.12,.24,.02);B.box(M7.dark,-L/2+.3,.55,z*Wv*.38,.5,.3,.03)}
+ return B.build()}
+
+// ---- tempo (mini goods carrier) ----
+function mkTempo7(L,Wv){const B=new MB7();
+ for(const sx of[1,-1])for(const sz of[1,-1])B.wheel(sx*L*.33,.38,sz*(Wv/2-.14),.38,.26);
+ B.box(M7.dark,0,.5,0,L*.96,.16,Wv*.7,.03);
+ B.box(M7.paint,L*.33,1.12,0,L*.32,1.45,Wv,.14);B.box(M7.glass,L/2-.02,1.5,0,.05,.6,Wv*.84,.03);for(const z of[1,-1])B.box(M7.glass,L*.33,1.5,z*(Wv/2+.005),L*.2,.5,.02,.02);
+ B.box(M7.chrome,L/2+.01,.85,0,.03,.25,Wv*.5,.02);for(const z of[1,-1]){B.cylX(M7.hl,L/2+.02,.8,z*Wv*.34,.09,.03);B.tube(M7.dark,V3(L*.45,1.6,z*Wv/2),V3(L*.5,1.55,z*(Wv/2+.18)),.015);B.box(M7.dark,L*.5,1.45,z*(Wv/2+.2),.03,.22,.12,.02)}
+ B.box(M7.white,-L*.17,1.3,0,L*.64,1.7,Wv,.06);B.box(M7.blue,-L*.17,1.3,0,L*.645,.25,Wv+.02,.02);B.box(M7.paint,-L*.17,.5,0,L*.64,.12,Wv*1.01,.03);
+ for(const z of[1,-1])B.box(M7.tl,-L/2-.02,.75,z*Wv*.38,.03,.1,.18,.01);
+ return B.build()}
+
+// ---- city bus ----
+function mkBus7(L,Wv){const B=new MB7();
+ for(const sx of[.33,-.33])for(const sz of[1,-1])B.wheel(sx*L,.52,sz*(Wv/2-.18),.52,.32);
+ B.box(M7.paint,0,1.0,0,L,1.2,Wv,.12);B.box(M7.glass,0,1.98,0,L*.985,.8,Wv*1.002,.04);
+ for(let k=0;k<=10;k++)for(const pz of[1,-1])B.box(M7.paint,-L*.48+k*L*.096,1.98,pz*(Wv/2+.01),.12,.82,.03);
+ B.box(M7.paint,0,2.55,0,L,.36,Wv,.1);B.box(M7.white,0,2.78,0,L*.96,.14,Wv*.9,.06);B.box(M7.white,0,1.55,0,L+.01,.1,Wv+.01,.02);
+ B.box(M7.glass,L/2+.01,1.75,0,.04,1.2,Wv*.88,.04);B.box(M7.busBoard,L/2+.02,2.5,0,.04,.24,Wv*.7,.01);
+ for(const z of[1,-1]){B.cylX(M7.hl,L/2+.02,.8,z*Wv*.36,.12,.03);B.box(M7.tl,-L/2-.02,.85,z*Wv*.38,.03,.25,.2,.02);B.tube(M7.dark,V3(L/2-.1,2.3,z*Wv/2),V3(L/2+.25,2.1,z*(Wv/2+.15)),.02);B.box(M7.dark,L/2+.25,1.85,z*(Wv/2+.15),.04,.45,.2,.02)}
+ B.box(M7.chrome,L/2+.03,.45,0,.08,.18,Wv*1.02,.04);B.box(M7.chrome,-L/2-.03,.45,0,.08,.18,Wv*1.02,.04);
+ B.box(M7.dark,L*.38,1.3,Wv/2+.01,.9,1.8,.02);
+ return B.build()}
+
+function veh7Build(){const S8=S;const dims=t=>[VT[t].L*S8,VT[t].W*S8*.82,VT[t].W*S8];const out={};
+ const wrap=(g)=>{const w=new THREE.Group();w.add(g);return w};
+ try{out.bike=wrap(mkBike7(false))}catch(e){console.warn('bike7',e)}
+ try{out.bullet=wrap(mkBike7(true))}catch(e){console.warn('bullet7',e)}
+ try{out.scooter=wrap(mkScooter7())}catch(e){console.warn('scooter7',e)}
+ try{const[L,,Wd]=dims('auto');out.auto=wrap(mkAuto7(L,Wd))}catch(e){console.warn('auto7',e)}
+ try{if(VT.cart){const[L,Wv]=dims('cart');out.cart=wrap(mkCart7(L,Wv))}}catch(e){console.warn('cart7',e)}
+ try{const[L,Wv]=dims('truck');out.truck=wrap(mkTruck7(L,Wv))}catch(e){console.warn('truck7',e)}
+ try{const[L,Wv]=dims('tempo');out.tempo=wrap(mkTempo7(L,Wv))}catch(e){console.warn('tempo7',e)}
+ try{const[L,Wv]=dims('bus');out.bus=wrap(mkBus7(L,Wv))}catch(e){console.warn('bus7',e)}
+ return out}
+let VEH7=null;
+function veh7Sync(){if(!VEH7)return;const on=QUAL>=1&&!(window.UIS&&UIS.boxCars);for(const t in VEH7){const cur=MODELS.vehicle[t];if(on&&!cur)MODELS.vehicle[t]=VEH7[t];else if(!on&&cur&&cur===VEH7[t])delete MODELS.vehicle[t]}}
+const _vet7=vehExtraTick;vehExtraTick=function(v,o){veh7Sync();_vet7(v,o);const u=o.userData;
+ if(u.custom&&VEH7&&u.customSrc===VEH7[v.type]){const key=(v.dead?'d':'')+v.col+QUAL;if(u.tint7!==key){u.tint7=key;const pm=paint6(v.col,v.dead);u.custom.traverse(m=>{if(m.isMesh&&m.userData.cat6==='paint')m.material=pm})}}};
+function fx7Init(){try{VEH7=veh7Build();veh7Sync()}catch(e){console.warn('fx7',e)}}
+function extrasInit(){if(window.__exi)return;window.__exi=1;onlineInit();fxInit();fx3Init();try{fx6Init()}catch(e){}try{fx7Init()}catch(e){}modelsInit();
   const st=document.createElement('style');st.textContent='#bjump{right:6px;bottom:100px;width:62px;height:62px;background:rgba(40,90,200,.55)}#wanted{position:absolute;top:calc(env(safe-area-inset-top) + 92px);left:calc(env(safe-area-inset-left) + 12px);color:#ffd34d;font-size:22px;letter-spacing:2px;text-shadow:0 0 6px #000,0 2px 0 #000;display:none;pointer-events:none}#mission{position:absolute;top:calc(env(safe-area-inset-top) + 8px);left:50%;transform:translateX(-50%);max-width:46%;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.3);border-radius:12px;padding:5px 10px;font-size:11.5px;line-height:1.3;text-align:center;pointer-events:auto;cursor:pointer}#mission b{color:#ffd34d;font-size:10px;display:block}#fadefx{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:40}'+'#cheat{position:absolute;top:calc(env(safe-area-inset-top) + 58px);left:50%;transform:translateX(-50%);display:none;pointer-events:auto;background:rgba(30,110,220,.85);border:2px solid #fff;border-radius:20px;padding:7px 14px;font-weight:800;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.5);cursor:pointer;white-space:nowrap}#cheat small{display:block;font-size:9px;font-weight:600;opacity:.85;text-align:center}'+'#tsu{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 92px);transform:translateX(-50%);display:none;z-index:25;background:rgba(200,20,20,.9);border:2px solid #fff;border-radius:14px;padding:8px 14px;text-align:center;font-size:14px;animation:tsuB 1s infinite;pointer-events:none;max-width:80vw}@keyframes tsuB{50%{background:rgba(120,0,0,.9)}}'+'#gear{position:absolute;display:none;left:calc(env(safe-area-inset-left) + 12px);bottom:calc(env(safe-area-inset-bottom) + 132px);background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.35);border-radius:12px;padding:5px 10px;font-weight:800;font-size:13px;pointer-events:none;white-space:nowrap}@media (orientation:landscape) and (max-height:520px){#gear{bottom:calc(env(safe-area-inset-bottom) + 112px)}}'+'#bcrew{position:absolute;display:none;align-items:center;pointer-events:auto;background:rgba(30,132,73,.85);border:1px solid #fff;border-radius:14px;padding:5px 10px;font-size:12px;font-weight:800;top:calc(env(safe-area-inset-top) + 236px);left:calc(env(safe-area-inset-left) + 12px);cursor:pointer}@media (orientation:landscape) and (max-height:520px){#bcrew{top:calc(env(safe-area-inset-top) + 118px)}}'+'#nav{position:absolute;top:calc(env(safe-area-inset-top) + 146px);right:calc(env(safe-area-inset-right) + 8px);display:none;pointer-events:auto;background:rgba(10,110,230,.88);border:1px solid #fff;border-radius:14px;padding:5px 26px 5px 10px;font-size:12px;max-width:46%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#navx{position:absolute;right:7px;top:4px;opacity:.9;cursor:pointer}'+'@media (orientation:portrait){#nav{top:calc(env(safe-area-inset-top) + 236px)}}'+'@media (orientation:landscape) and (max-height:520px){#nav{top:calc(env(safe-area-inset-top) + 122px)}}'+'@media (orientation:portrait){#mission{left:calc(env(safe-area-inset-left) + 12px);transform:none;top:calc(env(safe-area-inset-top) + 132px);max-width:52%;text-align:left}#cheat{left:calc(env(safe-area-inset-left) + 12px);transform:none;top:calc(env(safe-area-inset-top) + 186px)}#wanted{top:calc(env(safe-area-inset-top) + 92px)}}'+'@media (orientation:landscape) and (max-height:520px){#mm{width:96px!important;height:96px!important}#mmlabel{top:calc(env(safe-area-inset-top) + 106px)!important;width:96px!important;font-size:10px}'+'#bmap,#bq{top:calc(env(safe-area-inset-top) + 10px)!important;right:calc(env(safe-area-inset-right) + 114px)!important;width:68px!important;height:32px!important}#bq{top:calc(env(safe-area-inset-top) + 50px)!important}'+'#bact{right:200px!important;bottom:6px!important;width:auto!important;min-width:140px;max-width:220px;height:42px!important}'+'#mission{top:calc(env(safe-area-inset-top) + 6px);max-width:38%}#cheat{top:calc(env(safe-area-inset-top) + 50px)}#wanted{top:calc(env(safe-area-inset-top) + 84px)}#where{bottom:calc(env(safe-area-inset-bottom) + 4px)}}';document.head.appendChild(st);
   const host=$('bfire').parentNode;const bj=document.createElement('div');bj.className='b';bj.id='bjump';bj.innerHTML='<span>⤴️</span>JUMP';host.appendChild(bj);
   bj.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();inp.jump=true;bj.classList.add('on')});bj.addEventListener('pointerup',()=>bj.classList.remove('on'));
