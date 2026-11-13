@@ -2677,31 +2677,50 @@ function mkScooter7(){const B=new MB7(),l=1.8,r=.26,fx=l*.36,rx=-l*.36;
  B.box(M7.tl,-.84,.62,0,.04,.07,.18,.02);B.tube(M7.chrome,V3(-.4,.25,.16),V3(-.85,.32,.16),.035);
  return B.build()}
 
-// ---- auto-rickshaw ----
-function mkAuto7(L,Wd){const B=new MB7(),Wa=Wd*.78,fx=L*.36,rx=-L*.3,r=.24,wz=Wa/2-.08;
- B.wheel(fx,r,0,r,.14).wheel(rx,r,wz,r,.15).wheel(rx,r,-wz,r,.15);
- B.box(M7.dark,-L*.05,.42,0,L*.85,.12,Wa*.94,.04);
- // lower body tub + front cowl in body colour
- B.box(M7.paint,-L*.12,.66,0,L*.62,.36,Wa,.08);B.box(M7.paint,-L*.39,.86,0,L*.2,.78,Wa*1.01,.1);
- B.box(M7.paint,L*.3,.86,0,L*.22,.86,Wa*.5,.14);B.box(M7.paint,L*.22,.62,0,L*.12,.3,Wa*.8,.06);
- B.add(G7.halfTorus,M7.paint,mat7(fx,r,0,0,0,0,r+.08,r+.08,2.2));
- B.cylX(M7.chrome,L*.42,1.08,0,.1,.06);B.cylX(M7.hl,L*.445,1.08,0,.085,.01);for(const z of[.2,-.2])B.sph(M7.amber,L*.4,.95,z,.035,.03,.035);
- B.box(M7.yellow,L*.41,.78,0,.02,.08,Wa*.44,.01);
- // windscreen + frame
- B.box(M7.glass,L*.2,1.4,0,.03,.62,Wa*.72,.01);B.box(M7.dark,L*.2,1.72,0,.06,.06,Wa*.78,.02);B.box(M7.dark,L*.2,1.1,0,.06,.06,Wa*.78,.02);
- for(const z of[1,-1]){B.tube(M7.dark,V3(L*.2,1.1,z*Wa*.39),V3(L*.17,1.82,z*Wa*.47),.025);B.tube(M7.dark,V3(-L*.36,1.25,z*Wa*.49),V3(-L*.36,1.82,z*Wa*.49),.025)}
- // canopy (yellow) with curved front and back
- B.box(M7.canopy,-L*.08,1.86,0,L*.64,.1,Wa*1.04,.05);B.cylZ(M7.canopy,L*.23,1.79,0,.12,Wa*1.04);B.box(M7.canopy,-L*.405,1.5,0,.12,.8,Wa*1.04,.05);
- B.box(M7.canopy,-L*.36,1.1,0,.05,.3,Wa*1.02,.02);
- for(const z of[1,-1])B.box(M7.dark,-L*.1,1.8,z*Wa*.52,L*.5,.04,.03,.01);
+// ---- auto-rickshaw (Bajaj-style: yellow body, rounded black canopy) ----
+function ext7(draw,depth,bev){const sh=new THREE.Shape();draw(sh);const g=new THREE.ExtrudeGeometry(sh,{depth,bevelEnabled:bev>0,bevelThickness:bev,bevelSize:bev,bevelSegments:3,curveSegments:10});g.translate(0,0,-depth/2);return g}
+function mkAuto7(L,Wd){const B=new MB7(),k=1.3;const Y=M7.yellow,K=M7.dark;
+ const blackTop=new THREE.MeshStandardMaterial({color:0x111214,roughness:.45,metalness:.1});
+ const add=(g,m,x=0,y=0,z=0)=>B.add(g,m,mat7(x*k,y*k,z*k,0,0,0,k,k,k));
+ // rear tub: low sides at the passenger door, rising to full height behind the passengers
+ add(ext7(s=>{s.moveTo(-1.30,.30);s.lineTo(.30,.30);s.quadraticCurveTo(.42,.30,.44,.42);s.lineTo(.46,.62);s.lineTo(-.38,.62);s.quadraticCurveTo(-.50,.62,-.52,.75);s.lineTo(-.56,1.42);s.lineTo(-1.26,1.42);s.quadraticCurveTo(-1.32,1.40,-1.32,1.30);s.lineTo(-1.32,.40);s.quadraticCurveTo(-1.32,.30,-1.30,.30)},1.22,.04),Y);
+ // nose / front cowl: narrow, tall, rounded
+ add(ext7(s=>{s.moveTo(.40,.36);s.lineTo(1.10,.44);s.quadraticCurveTo(1.30,.48,1.30,.66);s.lineTo(1.28,1.02);s.quadraticCurveTo(1.26,1.20,1.08,1.22);s.lineTo(.80,1.22);s.quadraticCurveTo(.66,1.22,.62,1.08);s.lineTo(.46,.62)},.66,.06),Y);
+ // floor pan
+ B.box(K,-.4*k,.33*k,0,1.7*k,.06*k,1.18*k,.02*k);
+ // canopy: one curved shell that forms the roof and the closed back
+ add(ext7(s=>{const t=.035;s.moveTo(-1.36,1.40);s.lineTo(-1.36,1.62);s.quadraticCurveTo(-1.36,1.86,-1.10,1.88);s.lineTo(.62,1.88);s.quadraticCurveTo(.92,1.88,1.00,1.66);
+   s.lineTo(1.00-t,1.64);s.quadraticCurveTo(.90,1.88-t,.62,1.88-t);s.lineTo(-1.10,1.88-t);s.quadraticCurveTo(-1.36+t,1.86-t,-1.36+t,1.62);s.lineTo(-1.36+t,1.40)},1.34,.03),blackTop);
+ // canopy side skirts above the rear quarter
+ for(const z of[1,-1])B.box(blackTop,-.95*k,1.62*k,z*.67*k,.82*k,.5*k,.03*k,.03*k);
+ // rear window + side frame bars
+ B.box(M7.glass,-1.39*k,1.62*k,0,.02*k,.2*k,.7*k,.01*k);
+ for(const z of[1,-1]){B.tube(K,V3(.62*k,1.2*k,z*.62*k),V3(.60*k,1.87*k,z*.64*k),.022*k);B.tube(K,V3(-.56*k,1.4*k,z*.6*k),V3(-.56*k,1.87*k,z*.64*k),.02*k)}
+ // windscreen with black frame
+ B.box(M7.glass,.93*k,1.43*k,0,.02*k,.42*k,.92*k,.01*k,0,0,.12);B.box(K,.95*k,1.66*k,0,.05*k,.04*k,1.0*k,.015*k);B.box(K,.90*k,1.22*k,0,.05*k,.04*k,.96*k,.015*k);
+ for(const z of[1,-1])B.box(K,.92*k,1.44*k,z*.48*k,.04*k,.46*k,.035*k,.01*k,0,0,.12);
+ // green stripe (vehicle colour) along the body + front
+ for(const z of[1,-1])B.box(M7.paint,-.45*k,.5*k,z*.656*k,1.7*k,.035*k,.008*k);
+ B.box(M7.paint,1.37*k,.66*k,0,.01*k,.035*k,.5*k);
+ // headlight, indicators, horn, FOR HIRE board
+ B.cylX(M7.chrome,1.37*k,.88*k,0,.1*k,.05*k);B.cylX(M7.hl,1.397*k,.88*k,0,.085*k,.01*k);
+ for(const z of[.24,-.24])B.box(M7.amber,1.33*k,1.12*k,z*k,.03*k,.05*k,.08*k,.015*k);
+ B.box(M7.white,1.345*k,1.13*k,0,.012*k,.09*k,.26*k,.01*k);
+ // front fork, wheel, mudguard
+ const fx=1.06,r=.22;for(const z of[.07,-.07])B.tube(M7.chrome,V3(fx*k,r*k,z*k),V3((fx-.06)*k,.55*k,z*k),.018*k);
+ B.wheel(fx*k,r*k,0,r*k,.12*k);B.add(G7.halfTorus,Y,mat7(fx*k,r*k,0,0,0,0,(r+.07)*k,(r+.07)*k,2.4));
+ // rear wheels under the tub
+ for(const z of[1,-1])B.wheel(-.88*k,r*k,z*.58*k,r*k,.13*k);
  // seats
- B.box(M7.leather,-L*.2,.92,0,L*.16,.14,Wa*.86,.05);B.box(M7.leather,-L*.31,1.22,0,.1,.48,Wa*.86,.04);
- B.box(M7.leather,L*.08,.98,0,L*.12,.12,Wa*.3,.04);
- // handlebar
- B.tube(M7.chrome,V3(L*.17,1.2,-.32),V3(L*.17,1.2,.32),.018);B.tube(M7.dark,V3(L*.17,1.2,0),V3(L*.27,.95,0),.03);
- // tail lights + number plate
- for(const z of[1,-1])B.box(M7.tl,-L*.495,.75,z*Wa*.38,.02,.08,.12,.01);B.box(M7.white,-L*.495,.6,0,.02,.12,.3,.01);
- B.box(M7.white,-L*.11,.66,Wa/2+.005,L*.5,.05,.01);B.box(M7.white,-L*.11,.66,-Wa/2-.005,L*.5,.05,.01);
+ B.box(M7.leather,-.82*k,.78*k,0,.42*k,.12*k,1.1*k,.05*k);B.box(M7.leather,-1.05*k,1.08*k,0,.1*k,.5*k,1.1*k,.04*k);
+ B.box(M7.leather,.22*k,.80*k,0,.34*k,.1*k,.32*k,.04*k);B.cylY(K,.22*k,.55*k,0,.05*k,.45*k,1);
+ // handlebar + grab rail
+ B.tube(M7.chrome,V3(.58*k,1.18*k,-.3*k),V3(.58*k,1.18*k,.3*k),.016*k);B.tube(K,V3(.58*k,1.18*k,0),V3(.70*k,1.0*k,0),.03*k);
+ for(const z of[.32,-.32])B.cylX(M7.leather,.58*k,1.18*k,z*k,.022*k,.1*k);
+ B.tube(M7.chrome,V3(-.2*k,1.75*k,-.5*k),V3(-.2*k,1.75*k,.5*k),.012*k);
+ // rear: tail lights, number plate, bumper
+ for(const z of[1,-1])B.box(M7.tl,-1.345*k,.85*k,z*.42*k,.02*k,.1*k,.12*k,.01*k);
+ B.box(M7.white,-1.345*k,.62*k,0,.02*k,.12*k,.32*k,.01*k);B.box(K,-1.36*k,.38*k,0,.06*k,.06*k,1.1*k,.02*k);
  return B.build()}
 
 // ---- bullock cart with two oxen ----
