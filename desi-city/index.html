@@ -1164,10 +1164,10 @@ function heroShirt(){if(P.power&&typeof POWERS!=='undefined')return POWERS[P.pow
 const SAI_SKIN='#c48d7c';
 
 // ================= GLB PLAYER MODEL =================
-let glbTpl=null,glbAnims=[],glbName='';
+let glbTpl=null,glbAnims=[],glbName='',glbFlip=false;
 const gltfLoader=new GLTFLoader();
 function b64ToBuf(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u.buffer}
-function setGlb(buf,name){return new Promise((res,rej)=>{gltfLoader.parse(buf,'',g=>{glbTpl=g.scene;glbAnims=g.animations||[];glbName=name||'model';playerKey='';res(g)},e=>{console.warn('GLB load failed',e);rej(e)})})}
+function setGlb(buf,name){return new Promise((res,rej)=>{gltfLoader.parse(buf,'',g=>{glbTpl=g.scene;glbFlip=false;glbAnims=g.animations||[];glbName=name||'model';playerKey='';res(g)},e=>{console.warn('GLB load failed',e);rej(e)})})}
 function idb(){return new Promise((res,rej)=>{try{const r=indexedDB.open('desicity',1);r.onupgradeneeded=()=>r.result.createObjectStore('f');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
 async function idbSet(k,v){try{const db=await idb();await new Promise((res,rej)=>{const t=db.transaction('f','readwrite');t.objectStore('f').put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)})}catch(e){}}
 async function idbGet(k){try{const db=await idb();return await new Promise((res)=>{const t=db.transaction('f','readonly');const q=t.objectStore('f').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)})}catch(e){return null}}
@@ -1176,9 +1176,9 @@ async function initGlb(){
   const own=await idbGet('player');
   try{localStorage.setItem('desicity_hero','2')}catch(e){}
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
-  if(own){try{await setGlb(own,'your uploaded character');return}catch(e){}}
+  if(own){try{await setGlb(own,'your uploaded character');glbFlip=false;return}catch(e){}}
   try{if(localStorage.getItem('dc_classic_hero')==='1')return}catch(e){}
-  try{const r=await fetch('assets/hero.glb');if(r.ok){const buf=await r.arrayBuffer();await setGlb(buf,'3D hero')}}catch(e){}
+  try{const r=await fetch('assets/hero.glb');if(r.ok){const buf=await r.arrayBuffer();await setGlb(buf,'3D hero');glbFlip=true;playerKey=''}}catch(e){}
 }
 // photo sunset sky (HDR) for realistic reflections and light on cars, glass and metal
 (async()=>{try{const r=await fetch('assets/sky.hdr');if(!r.ok)return;const buf=await r.arrayBuffer();const d=new RGBELoader().parse(buf);
@@ -1188,7 +1188,7 @@ async function initGlb(){
 function makeGlbPlayer(){
   const model=SkeletonUtils.clone(glbTpl);
   model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;if(o.material){o.material=o.material.clone()}}});
-  const holder=new THREE.Group();holder.add(model);model.rotation.y=Math.PI/2;
+  const holder=new THREE.Group();holder.add(model);model.rotation.y=Math.PI/2+(glbFlip?Math.PI:0);
   holder.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(model);const h=bb.max.y-bb.min.y||1.8;const sc=1.83/h;
   model.scale.multiplyScalar(sc);holder.updateMatrixWorld(true);const bb2=new THREE.Box3().setFromObject(model);model.position.y-=bb2.min.y;
   const tilt=new THREE.Group();tilt.add(holder);const root=new THREE.Group();root.add(tilt);
