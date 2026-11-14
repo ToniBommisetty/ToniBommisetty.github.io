@@ -3360,6 +3360,48 @@ function cop21Tick(dt){const el=cop21El();const hide=()=>{el.style.display='none
  if(_v21.z>1||Math.abs(_v21.x)>1.05||Math.abs(_v21.y)>1.05){el.style.display='none';return}
  el.style.display='block';el.style.left=((_v21.x+1)/2*innerWidth)+'px';el.style.top=((1-_v21.y)/2*innerHeight)+'px'}
 const _up21=updatePlayer;updatePlayer=function(dt){const r=_up21.apply(this,arguments);try{cop21Tick(Math.min(.1,dt||.016))}catch(e){}return r};
+
+// ===== fx22: green direction signboards at road junctions (real places, arrows and distances) =====
+const SIGN22={g:null,key:'',t:0};
+const SIGN22_PRI={hwy:10,place:9,airport:9,hospital:8,stadium:7,mall:7,temple:7,bigtemple:9,theatre:6,court:5,hotel:4,bank:3,petrol:3,masjid:4,church:4,restaurant:2,tea:2};
+function sign22Tex(rows){const c=document.createElement('canvas');c.width=512;c.height=70+rows.length*76;const g=c.getContext('2d');
+ g.fillStyle='#0b6b2e';g.beginPath();g.roundRect(0,0,512,c.height,22);g.fill();g.strokeStyle='#fff';g.lineWidth=7;g.beginPath();g.roundRect(9,9,494,c.height-18,16);g.stroke();
+ g.fillStyle='#ffd34d';g.font='bold 26px Arial';g.textAlign='center';g.fillText(W.name?String(W.name).toUpperCase():'',256,48);
+ rows.forEach((r,i)=>{const y=70+i*76+44;g.fillStyle='rgba(255,255,255,.18)';if(i)g.fillRect(24,70+i*76,464,2);
+  g.fillStyle='#fff';g.font='bold 46px Arial';g.textAlign='left';g.fillText(r.arrow,26,y+4);
+  g.font='bold 32px Arial';let nm=r.name;while(g.measureText(nm).width>290&&nm.length>4)nm=nm.slice(0,-2);if(nm!==r.name)nm=nm.trim()+'…';g.fillText(nm,86,y);
+  g.font='bold 28px Arial';g.textAlign='right';g.fillStyle='#ffd34d';g.fillText(r.km,488,y)});
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return[t,c.height/512]}
+function sign22Fmt(d){return d>=1000?(d/1000).toFixed(1)+' km':Math.round(d/10)*10+' m'}
+function sign22Build(){if(!W||!W.real||!REAL)return;const NV=navBuild();if(!NV||!NV.X.length)return;const key=W.t&&(REAL.cE+','+REAL.cN+','+NV.X.length+','+(FX13.hw?FX13.hw.gates.length:0));if(key===SIGN22.key&&SIGN22.g)return;SIGN22.key=key;
+ if(SIGN22.g){scene.remove(SIGN22.g);SIGN22.g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose()}})}
+ const G=new THREE.Group();SIGN22.g=G;scene.add(G);
+ const pois=NV.pois.filter(p=>SIGN22_PRI[p.type]);
+ const[pe,pn]=px2m(P.x,P.y);const lim=WIN-40;
+ // junctions inside the loaded window, nearest first, at least 110 m apart
+ const J=[];for(let i=0;i<NV.X.length;i++){if(NV.adj[i].length<3)continue;if(Math.abs(NV.X[i]-REAL.cE)>lim||Math.abs(NV.Y[i]-REAL.cN)>lim)continue;J.push(i)}
+ J.sort((a,b)=>Math.hypot(NV.X[a]-pe,NV.Y[a]-pn)-Math.hypot(NV.X[b]-pe,NV.Y[b]-pn));
+ const placed=[];const pole=new THREE.MeshStandardMaterial({color:0x8a9096,metalness:.7,roughness:.4});const poleG=new THREE.CylinderGeometry(.07,.07,1,8);
+ for(const j of J){if(placed.length>=(QUAL===0?8:14))break;const je=NV.X[j],jn=NV.Y[j];if(placed.some(q=>Math.hypot(q[0]-je,q[1]-jn)<110))continue;
+  // approach road: pick the neighbour that leads back towards the player's side (signs face incoming traffic)
+  const nb=NV.adj[j];let k=nb[0],bs=-1e9;for(const q of nb){const s=-Math.hypot(NV.X[q]-pe,NV.Y[q]-pn);if(s>bs){bs=s;k=q}}
+  let fe=je-NV.X[k],fn=jn-NV.Y[k];const fl=Math.hypot(fe,fn)||1;fe/=fl;fn/=fl;
+  // destinations: best-ranked places 150 m – 400 km away, one per direction where possible
+  const cand=[];for(const p of pois){const de=p.e-je,dn=p.n-jn,d=Math.hypot(de,dn);if(d<150)continue;const cr=fe*dn-fn*de,dt=fe*de+fn*dn,ang=Math.atan2(cr,dt);
+   const arrow=Math.abs(ang)<.6?'⬆':ang>0?(ang>2.5?'↩':'⬅'):(ang<-2.5?'↪':'➡');cand.push({name:p.name.replace(/\s*\(.*\)$/,'').replace(/^NH \d+ to /,''),arrow,d,sc:SIGN22_PRI[p.type]*1000/Math.max(300,Math.min(d,6000)),hw:p.type==='hwy',kmTxt:p.hw13&&FX13.hw?(FX13.hw.gates.find(g=>g.dest.name===p.hw13)||{}).km:null})}
+  cand.sort((a,b)=>b.sc-a.sc);const rows=[],usedA={},usedN=new Set();
+  for(const c of cand){if(rows.length>=3)break;if(usedN.has(c.name))continue;if((usedA[c.arrow]||0)>=(c.hw?2:1)&&rows.length<2&&cand.length>6)continue;usedN.add(c.name);usedA[c.arrow]=(usedA[c.arrow]||0)+1;rows.push({arrow:c.arrow,name:c.name,km:c.kmTxt?c.kmTxt+' km':sign22Fmt(c.d)})}
+  if(rows.length<2)continue;
+  // place on the left side of the approach road (India drives on the left), 12 m before the junction
+  const le=-fn,ln=fe;let se=je-fe*12+le*8,sn=jn-fn*12+ln*8;const[px,py]=m2px(se,sn);if(tileAt(px,py)===BD||tileAt(px,py)===RD)continue;
+  const[tex,asp]=sign22Tex(rows);const w=5.4,h=w*asp,gh=groundH(px,py);
+  const board=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));
+  const ry=Math.atan2(-fe,fn);board.position.set(px*S,gh+2.6+h/2,py*S);board.rotation.y=ry;G.add(board);
+  const back=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({color:0x4a5258,roughness:.6}));back.position.copy(board.position);back.rotation.y=ry+Math.PI;back.translateZ(.03);G.add(back);
+  for(const s of[-1,1]){const m=new THREE.Mesh(poleG,pole);m.scale.set(1,2.6+h,1);m.position.set(px*S+Math.cos(ry)*s*w*.38,gh+(2.6+h)/2,py*S-Math.sin(ry)*s*w*.38);m.translateZ(-.05);G.add(m)}
+  placed.push([je,jn])}}
+const _bc22=buildCity3D;buildCity3D=function(){const r=_bc22.apply(this,arguments);try{SIGN22.key='';sign22Build()}catch(e){console.warn('sign22',e)}return r};
+const _up22=updatePlayer;updatePlayer=function(dt){const r=_up22.apply(this,arguments);try{SIGN22.t-=dt||.016;if(SIGN22.t<=0){SIGN22.t=3;if(!INT.active)sign22Build();if(SIGN22.g)SIGN22.g.visible=!INT.active}}catch(e){}return r};
 const _sg12=startGame;startGame=async function(){const r=await _sg12.apply(this,arguments);try{setTimeout(intro12Start,250)}catch(e){}return r};
 
 // ===== fx13: Raksha Force heroes in the city, parked helicopters, animals off roads, highways to other states =====
