@@ -2304,10 +2304,10 @@ function uiControls(L){const e=document.createElement('div');e.className='item';
   e.innerHTML='<div style="display:flex;gap:10px;align-items:center"><div class="ic">🎛️</div><div class="tx"><b>On-screen buttons</b><small>Make the buttons smaller or see-through so they cover less of the game</small></div></div>'+
    '<label style="display:flex;gap:10px;align-items:center;font-size:13px">Size<input id="uis" type="range" min="60" max="130" step="5" style="flex:1"><span id="uisv"></span></label>'+
    '<label style="display:flex;gap:10px;align-items:center;font-size:13px">See-through<input id="uio" type="range" min="15" max="100" step="5" style="flex:1"><span id="uiov"></span></label>'+
-   '<button class="btn" id="uir" style="align-self:flex-start">Reset buttons</button>';L.appendChild(e);
+   '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn g" id="uimove">✋ Move buttons</button><button class="btn" id="uir">Reset buttons</button></div>';L.appendChild(e);e.querySelector('#uimove').onclick=()=>{closeShop();layout18Edit(true)};
   const s=e.querySelector('#uis'),o=e.querySelector('#uio'),sv=e.querySelector('#uisv'),ov=e.querySelector('#uiov');
   const upd=()=>{sv.textContent=Math.round(UIS.s*100)+'%';ov.textContent=Math.round(UIS.o*100)+'%';s.value=Math.round(UIS.s*100);o.value=Math.round(UIS.o*100)};upd();
-  s.oninput=()=>{UIS.s=s.value/100;applyUIS();upd()};o.oninput=()=>{UIS.o=o.value/100;applyUIS();upd()};e.querySelector('#uir').onclick=()=>{UIS.s=1;UIS.o=1;applyUIS();upd()};
+  s.oninput=()=>{UIS.s=s.value/100;applyUIS();upd()};o.oninput=()=>{UIS.o=o.value/100;applyUIS();upd()};e.querySelector('#uir').onclick=()=>{UIS.s=1;UIS.o=1;applyUIS();upd();layout18Reset()};
   for(const el of[s,o])el.addEventListener('pointerdown',ev=>ev.stopPropagation())}
 function fxInit(){if(window.__fxi)return;window.__fxi=1;applyUIS();giveTools();openWeapPicker();$('wpick').style.display='none';
   const b=document.createElement('div');b.className='b';b.id='bhit';b.innerHTML='<span>👊</span>HIT';$('bfire').parentNode.appendChild(b);
@@ -3272,6 +3272,38 @@ const _up16=updatePed;updatePed=function(p,dt){const T=p.thrown16;if(T){T.t+=dt;
   if(k>=1){p.thrown16=null;p.alt=0;p.spin16=0;p.hp-=45;if(!circleFree(p.x,p.y,5)){p.x=T.x0;p.y=T.y0}shake=Math.max(shake||0,.35);
    if(p.hp<=0)killPed(p,'player');else{p.state='flee';p.tm=5;p.fx=P.x;p.fy=P.y}toast('💥 Thrown!',.8)}return}
  return _up16(p,dt)};
+
+// ===== fx18: drag the on-screen buttons wherever you like (saved on this device) =====
+const LAY18={pos:(()=>{try{return JSON.parse(localStorage.getItem('dc_btnpos')||'{}')}catch(e){return{}}})(),edit:false};
+function lay18Btns(){return [...document.querySelectorAll('#btns > .b')]}
+function layout18Apply(){for(const b of lay18Btns()){const p=LAY18.pos[b.id];b.style.translate=p?p[0]+'px '+p[1]+'px':''}}
+function layout18Save(){try{localStorage.setItem('dc_btnpos',JSON.stringify(LAY18.pos))}catch(e){}}
+function layout18Reset(){LAY18.pos={};layout18Save();layout18Apply()}
+(function(){const st=document.createElement('style');st.textContent=`
+body.lay18 #btns > .b{outline:3px dashed #ffd34d;outline-offset:3px;animation:lay18w 1s ease-in-out infinite alternate}
+body.lay18 #btns > .b.lay18drag{outline-color:#4cd964;animation:none;z-index:5}
+@keyframes lay18w{from{filter:brightness(1)}to{filter:brightness(1.35)}}
+#lay18bar{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 10px);transform:translateX(-50%);z-index:70;display:none;gap:8px;align-items:center;background:rgba(0,0,0,.78);color:#fff;border-radius:18px;padding:8px 10px 8px 14px;font:700 13px system-ui;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+#lay18bar button{border:0;border-radius:12px;padding:8px 12px;font:800 13px system-ui}
+body.lay18 #lay18bar{display:flex}`;document.head.appendChild(st);
+ const bar=document.createElement('div');bar.id='lay18bar';bar.innerHTML='<span>✋ Drag the buttons where you want them</span><button id="lay18r" style="background:#555;color:#fff">Reset</button><button id="lay18d" style="background:#4cd964;color:#111">✓ Done</button>';document.body.appendChild(bar);
+ bar.querySelector('#lay18d').onclick=()=>layout18Edit(false);bar.querySelector('#lay18r').onclick=()=>layout18Reset();
+ // while editing, buttons are dragged instead of pressed
+ let drag=null;
+ document.addEventListener('pointerdown',e=>{if(!LAY18.edit)return;const b=e.target.closest&&e.target.closest('#btns > .b');if(!b)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+  const p=LAY18.pos[b.id]||[0,0];drag={b,id:e.pointerId,x:e.clientX,y:e.clientY,p0:p.slice()};b.classList.add('lay18drag');try{b.setPointerCapture(e.pointerId)}catch(_){}} ,true);
+ document.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+  const sc=UIS.s||1,b=drag.b;let dx=drag.p0[0]+(e.clientX-drag.x)/sc,dy=drag.p0[1]+(e.clientY-drag.y)/sc;
+  // keep the button on screen
+  b.style.translate=dx+'px '+dy+'px';const r=b.getBoundingClientRect();const m=4;
+  if(r.left<m)dx+=(m-r.left)/sc;if(r.right>innerWidth-m)dx-=(r.right-innerWidth+m)/sc;if(r.top<m)dy+=(m-r.top)/sc;if(r.bottom>innerHeight-m)dy-=(r.bottom-innerHeight+m)/sc;
+  LAY18.pos[b.id]=[Math.round(dx),Math.round(dy)];b.style.translate=LAY18.pos[b.id][0]+'px '+LAY18.pos[b.id][1]+'px'},true);
+ const up=e=>{if(!drag||e.pointerId!==drag.id)return;e.stopPropagation();e.stopImmediatePropagation();drag.b.classList.remove('lay18drag');drag=null;layout18Save()};
+ document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',up,true);
+ for(const t of['touchstart','touchmove','touchend'])document.addEventListener(t,e=>{if(LAY18.edit&&e.target.closest&&e.target.closest('#btns > .b'))e.stopImmediatePropagation()},{capture:true,passive:true});
+})();
+function layout18Edit(on){LAY18.edit=!!on;document.body.classList.toggle('lay18',!!on);if(on){layout18Apply();toast('✋ Drag any button to move it, then tap Done',2)}else{layout18Save();toast('✅ Button layout saved',1.2)}}
+setTimeout(layout18Apply,1500);setInterval(()=>{if(!LAY18.edit)layout18Apply()},3000);
 const _sg12=startGame;startGame=async function(){const r=await _sg12.apply(this,arguments);try{setTimeout(intro12Start,250)}catch(e){}return r};
 
 // ===== fx13: Raksha Force heroes in the city, parked helicopters, animals off roads, highways to other states =====
