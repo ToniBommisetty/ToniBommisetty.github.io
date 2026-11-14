@@ -3184,6 +3184,58 @@ function intro12Cam(dt){const I=INTRO12;I.t+=dt;const t=I.t,cx=I.cx,cz=I.cz,a=I.
  if(A&&A.visible){if(A.userData&&A.userData.glb){animGlb(A,ap,false,dt);if(ap.pose==='fly'){A.userData.tilt.rotation.z=-1.25;A.userData.tilt.position.y=.9}else if(ap.pose==='swing'){A.userData.tilt.rotation.z=-.25}}else animHuman(A,ap,false)}
  if(t<3.2||t>17.2)camera.position.lerp(_i12v,Math.min(1,dt*3.5));else camera.position.copy(_i12v);camera.lookAt(_i12t);
  if(t>I.dur||INT.active)intro12End()}
+
+// ===== fx16: 3D hero — real punches & kicks, superhero suits when powers are picked up, horizontal flying =====
+const SUIT16={
+ sky:{suit:'#1f4fbf',cape:'#b3122e',belt:'#e0b23a',em:'sun'},
+ speed:{suit:'#d9dee3',cape:null,belt:'#4fc3f7',em:'wind'},
+ web:{suit:'#0e6b73',cape:null,belt:'#f5c542',em:'web'}};
+function emblem16(kind){const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');g.translate(128,128);
+ if(kind==='sun'){g.fillStyle='#b3122e';g.beginPath();g.arc(0,0,120,0,7);g.fill();g.strokeStyle='#ffd34d';g.lineWidth=10;g.beginPath();g.arc(0,0,112,0,7);g.stroke();g.fillStyle='#ffd34d';g.beginPath();g.arc(0,0,42,0,7);g.fill();
+  for(let i=0;i<12;i++){g.save();g.rotate(i*Math.PI/6);g.beginPath();g.moveTo(-12,-52);g.lineTo(0,-96);g.lineTo(12,-52);g.fill();g.restore()}}
+ else if(kind==='web'){g.fillStyle='#0b2e33';g.beginPath();g.arc(0,0,120,0,7);g.fill();g.strokeStyle='#f5c542';g.lineWidth=6;for(let i=0;i<8;i++){g.beginPath();g.moveTo(0,0);g.lineTo(Math.cos(i*Math.PI/4)*112,Math.sin(i*Math.PI/4)*112);g.stroke()}
+  for(const r of[30,60,90]){g.beginPath();for(let i=0;i<=8;i++){const a=i*Math.PI/4;const x=Math.cos(a)*r,y=Math.sin(a)*r;i?g.quadraticCurveTo(Math.cos(a-Math.PI/8)*r*.8,Math.sin(a-Math.PI/8)*r*.8,x,y):g.moveTo(x,y)}g.stroke()}}
+ else{g.fillStyle='#263238';g.beginPath();g.arc(0,0,120,0,7);g.fill();g.strokeStyle='#4fc3f7';g.lineWidth=14;g.lineCap='round';for(let k=0;k<3;k++){g.beginPath();g.arc(-10+k*8,-6+k*6,30+k*26,Math.PI*.9,Math.PI*2.1);g.stroke()}}
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
+const EMB16={};
+function suit16(o){const u=o.userData;const k=P.power&&SUIT16[P.power]?P.power:null;if(u.suit16k===k)return;u.suit16k=k;
+ // body colour: original camo texture, or a solid superhero suit
+ o.traverse(m=>{if(m.isMesh&&m.material&&!m.userData.acc16){const mt=m.material;if(!mt.userData.orig16)mt.userData.orig16={map:mt.map,color:mt.color.clone(),rough:mt.roughness,metal:mt.metalness};const O=mt.userData.orig16;
+   if(k){mt.map=null;mt.color.set(SUIT16[k].suit);mt.roughness=.42;mt.metalness=.15}else{mt.map=O.map;mt.color.copy(O.color);mt.roughness=O.rough;mt.metalness=O.metal}mt.needsUpdate=true}});
+ if(u.acc16){u.tilt.remove(u.acc16);u.acc16.traverse(m=>{if(m.geometry)m.geometry.dispose()})}u.acc16=null;if(!k)return;
+ const S6=SUIT16[k],g=new THREE.Group();g.userData.acc16=true;
+ const em=new THREE.Mesh(new THREE.CircleGeometry(.11,32),new THREE.MeshStandardMaterial({map:EMB16[S6.em]||(EMB16[S6.em]=emblem16(S6.em)),roughness:.35,metalness:.3,polygonOffset:true,polygonOffsetFactor:-4}));em.position.set(.2,1.36,0);em.rotation.y=Math.PI/2;em.userData.acc16=true;em.name='emblem';g.add(em);
+ const belt=new THREE.Mesh(new THREE.TorusGeometry(.19,.035,8,24),new THREE.MeshStandardMaterial({color:S6.belt,metalness:.8,roughness:.3}));belt.rotation.x=Math.PI/2;belt.scale.set(1,.82,1);belt.position.set(.02,1.02,0);belt.userData.acc16=true;g.add(belt);
+ if(S6.cape){const cg=new THREE.PlaneGeometry(.62,1.15,4,10);cg.translate(0,-.575,0);const cm=new THREE.Mesh(cg,new THREE.MeshStandardMaterial({color:S6.cape,side:THREE.DoubleSide,roughness:.7}));cm.rotation.y=Math.PI/2;cm.userData.acc16=true;cm.castShadow=true;const cape=new THREE.Group();cape.position.set(-.17,1.5,0);cape.name='cape';cape.add(cm);g.add(cape);
+  const col=new THREE.Mesh(new THREE.TorusGeometry(.15,.03,6,18,Math.PI),cm.material);col.position.set(-.05,1.52,0);col.rotation.set(Math.PI/2,0,Math.PI/2);col.userData.acc16=true;g.add(col)}
+ u.tilt.add(g);u.acc16=g}
+// point a bone's +Y axis along a world direction (mixamo bones run along +Y), blended by weight
+const _q16=new THREE.Quaternion(),_q16b=new THREE.Quaternion(),_v16=new THREE.Vector3(),_Y16=new THREE.Vector3(0,1,0);
+function aim16(b,dir,w){if(!b||w<=0)return;b.parent.updateWorldMatrix(true,false);b.parent.getWorldQuaternion(_q16b);_q16.setFromUnitVectors(_Y16,_v16.copy(dir).normalize());_q16.premultiply(_q16b.invert());b.quaternion.slerp(_q16,Math.min(1,w));b.updateMatrixWorld(true)}
+function bones16(o){const u=o.userData;if(u.b16)return u.b16;const f=n=>{let r=null;o.traverse(x=>{if(!r&&x.isBone&&x.name.replace(/[:_]/g,'').toLowerCase().endsWith(n))r=x});return r};
+ u.b16={ra:f('rightarm'),rf:f('rightforearm'),la:f('leftarm'),lf:f('leftforearm'),rl:f('rightupleg'),rk:f('rightleg'),ll:f('leftupleg'),lk:f('leftleg'),sp:f('spine2')};return u.b16}
+const _F16=new THREE.Vector3(),_U16=new THREE.Vector3(),_R16=new THREE.Vector3(),_d16=new THREE.Vector3();
+const _ag16=animGlb;animGlb=function(o,p,aim,dt){_ag16(o,p,aim,dt);if(o!==playerMesh||p.dead)return;const u=o.userData;
+ try{suit16(o);const B=bones16(o);const a=P.a;
+  const fly=P.glide&&(P.glide.mode==='fly'),swing=P.glide&&P.glide.mode==='swing';
+  // horizontal flying, like a superhero: body leans flat, one fist forward, the other arm along the side
+  if(fly){const sp=P.moving?1:.7;u.tilt.rotation.z=-1.35*sp;u.tilt.position.y=.85*sp}
+  else if(swing){u.tilt.rotation.z=-.3}
+  o.updateMatrixWorld(true);
+  _F16.set(Math.cos(a),0,Math.sin(a));_U16.set(0,1,0);_R16.crossVectors(_F16,_U16);
+  // body axes after the tilt
+  const bodyUp=_d16.set(0,1,0).applyQuaternion(u.tilt.getWorldQuaternion(_q16b)).clone();
+  if(fly){aim16(B.ra,_F16.clone().multiplyScalar(.3).add(bodyUp),1);aim16(B.rf,bodyUp,1);aim16(B.la,bodyUp.clone().negate().addScaledVector(_R16,.25),1);aim16(B.lf,bodyUp.clone().negate(),1);
+   for(const b of[B.rl,B.ll])aim16(b,bodyUp.clone().negate(),.9);for(const b of[B.rk,B.lk])aim16(b,bodyUp.clone().negate().addScaledVector(_F16,-.15),.9)}
+  // punches and kicks (alternate), with the other arm guarding
+  if(P.atkT>0&&!fly){const k=1-P.atkT/.38,w=Math.sin(Math.min(1,k*1.25)*Math.PI);
+   if(P.atkKind==='kick'){aim16(B.rl,_F16.clone().multiplyScalar(.95).addScaledVector(_U16,.35),w);aim16(B.rk,_F16.clone().multiplyScalar(.9).addScaledVector(_U16,.2),w);aim16(B.la,_F16.clone().addScaledVector(_U16,-.3).addScaledVector(_R16,-.4),w*.7)}
+   else if(P.atkKind==='punch'){aim16(B.ra,_F16.clone().addScaledVector(_U16,.12).addScaledVector(_R16,-.08),w);aim16(B.rf,_F16.clone().addScaledVector(_U16,.1),w);
+    aim16(B.la,_F16.clone().multiplyScalar(.6).addScaledVector(_U16,-.4).addScaledVector(_R16,-.5),w*.8);aim16(B.lf,_U16.clone().addScaledVector(_F16,.6),w*.8)}
+   else{aim16(B.ra,_F16.clone().addScaledVector(_R16,.6-1.6*k).addScaledVector(_U16,.3),w);aim16(B.rf,_F16.clone().addScaledVector(_R16,.4-1.4*k),w)}}
+  // cape: hangs, flies back when running, streams behind when flying
+  const cape=u.acc16&&u.acc16.getObjectByName('cape');if(cape){const spd=fly?1:P.moving?(P.run?.75:.4):0;cape.rotation.z=(cape.rotation.z||0)+((-spd*1.1+Math.sin(tsec*7)*.06*spd)-(cape.rotation.z||0))*Math.min(1,dt*6)}
+ }catch(e){}};
 const _sg12=startGame;startGame=async function(){const r=await _sg12.apply(this,arguments);try{setTimeout(intro12Start,250)}catch(e){}return r};
 
 // ===== fx13: Raksha Force heroes in the city, parked helicopters, animals off roads, highways to other states =====
