@@ -1132,7 +1132,7 @@ function render3D(dt){
     v.lastA=v.a;
   },230);
   syncList(peds,p=>{if(p.kind==='cow'){const m=new THREE.Mesh(p.buff?buffGeo:cowGeo,plainMat);m.castShadow=true;return m}if(p.kind==='dog'||p.kind==='cat')return makePet(p);const hm=makeHuman(p);if(p.kid)hm.scale.setScalar(.62);if(p.raksha)try{suit13(hm,RFK13[p.raksha])}catch(e){}if(p.lota){const c=hm.userData.cup;c.material=lotaMat;c.scale.set(2,1.6,2);c.visible=true}return hm},(p,o)=>{
-    o.position.set(p.x*S,groundH(p.x,p.y)+(p.alt||0),p.y*S);o.rotation.y=-p.a;o.visible=!p.hidden;if(p.kind==='cow')return;if(p.kind==='dog'||p.kind==='cat'){animPet(o,p);return}animHuman(o,p,((p.kind==='gang'&&p.gang&&p.gang.anger>0)||(p.kind==='police'&&P.wanted>0&&p.hostile)||(p.kind==='crew'&&p.aim))&&!p.dead)},150);
+    o.position.set(p.x*S,groundH(p.x,p.y)+(p.alt||0),p.y*S);o.rotation.y=-p.a;o.rotation.z=p.spin16||0;o.visible=!p.hidden;if(p.kind==='cow')return;if(p.kind==='dog'||p.kind==='cat'){animPet(o,p);return}animHuman(o,p,((p.kind==='gang'&&p.gang&&p.gang.anger>0)||(p.kind==='police'&&P.wanted>0&&p.hostile)||(p.kind==='crew'&&p.aim))&&!p.dead)},150);
   syncList(pickups,k=>new THREE.Mesh(pickG,k.type==='cash'?pickCash:pickAmmo),(k,o)=>{o.position.set(k.x*S,.5+Math.sin(tsec*3+k.x)*.12,k.y*S);o.rotation.y=tsec*2},120);
   for(const[e,m]of ents)if(m.seen!==frameId){dropEnt(m);ents.delete(e)}
   // player
@@ -3227,15 +3227,36 @@ const _ag16=animGlb;animGlb=function(o,p,aim,dt){_ag16(o,p,aim,dt);if(o!==player
   const bodyUp=_d16.set(0,1,0).applyQuaternion(u.tilt.getWorldQuaternion(_q16b)).clone();
   if(fly){aim16(B.ra,_F16.clone().multiplyScalar(.3).add(bodyUp),1);aim16(B.rf,bodyUp,1);aim16(B.la,bodyUp.clone().negate().addScaledVector(_R16,.25),1);aim16(B.lf,bodyUp.clone().negate(),1);
    for(const b of[B.rl,B.ll])aim16(b,bodyUp.clone().negate(),.9);for(const b of[B.rk,B.lk])aim16(b,bodyUp.clone().negate().addScaledVector(_F16,-.15),.9)}
-  // punches and kicks (alternate), with the other arm guarding
-  if(P.atkT>0&&!fly){const k=1-P.atkT/.38,w=Math.sin(Math.min(1,k*1.25)*Math.PI);
-   if(P.atkKind==='kick'){aim16(B.rl,_F16.clone().multiplyScalar(.95).addScaledVector(_U16,.35),w);aim16(B.rk,_F16.clone().multiplyScalar(.9).addScaledVector(_U16,.2),w);aim16(B.la,_F16.clone().addScaledVector(_U16,-.3).addScaledVector(_R16,-.4),w*.7)}
-   else if(P.atkKind==='punch'){aim16(B.ra,_F16.clone().addScaledVector(_U16,.12).addScaledVector(_R16,-.08),w);aim16(B.rf,_F16.clone().addScaledVector(_U16,.1),w);
-    aim16(B.la,_F16.clone().multiplyScalar(.6).addScaledVector(_U16,-.4).addScaledVector(_R16,-.5),w*.8);aim16(B.lf,_U16.clone().addScaledVector(_F16,.6),w*.8)}
-   else{aim16(B.ra,_F16.clone().addScaledVector(_R16,.6-1.6*k).addScaledVector(_U16,.3),w);aim16(B.rf,_F16.clone().addScaledVector(_R16,.4-1.4*k),w)}}
+  // fighting: boxing guard, jab / cross / hook / front kick / roundhouse / grab-and-throw, overhead weapon swings
+  const V=(f,u,r)=>_F16.clone().multiplyScalar(f).addScaledVector(_U16,u).addScaledVector(_R16,r);
+  const guard=(w)=>{aim16(B.ra,V(.35,-.75,.32),w);aim16(B.rf,V(.5,.85,-.15),w);aim16(B.la,V(.45,-.72,-.3),w);aim16(B.lf,V(.55,.85,.12),w)};
+  P.guardT=Math.max(0,(P.guardT||0)-dt);
+  if(!fly&&!P.veh){const mv=P.atkT>0?P.move16:null;const k=P.atkT>0?1-P.atkT/(P.atkDur16||.38):0;const pk=Math.sin(Math.min(1,k*1.25)*Math.PI);
+   const gw=P.atkT>0?1:Math.min(1,P.guardT*1.5)*(P.moving&&P.run?.4:1);if(gw>0&&!(mv==='swing'||mv==='throw'))guard(gw);
+   if(mv==='jab'){aim16(B.la,V(1,.12,-.06),pk);aim16(B.lf,V(1,.1,-.04),pk)}
+   else if(mv==='cross'){aim16(B.ra,V(1,.12,-.16),pk);aim16(B.rf,V(1,.1,-.12),pk);aim16(B.sp,V(.25,1,-.12),pk*.5)}
+   else if(mv==='hook'){const a=k*1.4;aim16(B.ra,V(.35+Math.min(1,a)*.5,.15,.9-Math.min(1,a)*1.2),pk);aim16(B.rf,V(.9,.15,-.6),pk)}
+   else if(mv==='kick'){aim16(B.rl,V(.95,.38,.05),pk);aim16(B.rk,V(.95,.25,.05),pk)}
+   else if(mv==='round'){aim16(B.ll,V(.55,.42,-.75),pk);aim16(B.lk,V(.75,.35,-.55),pk);aim16(B.ra,V(.2,-.6,.7),pk*.6)}
+   else if(mv==='throw'){const up=k<.45?k/.45:1,ov=k<.45?0:(k-.45)/.55;const d=V(1-ov*1.4,.1+up*.6+ov*.3,0);for(const b of[B.ra,B.la])aim16(b,d.clone().addScaledVector(_R16,b===B.ra?.18:-.18),1);for(const b of[B.rf,B.lf])aim16(b,d,1)}
+   else if(mv==='swing'){const d=k<.35?V(-.25,1,0):V(Math.min(1,(k-.35)*3),1-Math.min(1.5,(k-.35)*4),0);for(const b of[B.ra,B.la,B.rf,B.lf])aim16(b,d.clone().addScaledVector(_R16,b===B.ra||b===B.rf?.12:-.12),1)}}
   // cape: hangs, flies back when running, streams behind when flying
   const cape=u.acc16&&u.acc16.getObjectByName('cape');if(cape){const spd=fly?1:P.moving?(P.run?.75:.4):0;cape.rotation.z=(cape.rotation.z||0)+((-spd*1.1+Math.sin(tsec*7)*.06*spd)-(cape.rotation.z||0))*Math.min(1,dt*6)}
  }catch(e){}};
+
+const MOVES16=['jab','cross','hook','kick','jab','cross','round'];
+const _ma16=meleeAttack;meleeAttack=function(){const before=P.atkT||0;_ma16.apply(this,arguments);if(!(P.atkT>before))return;
+ const w=WEAP[P.wi],tool=w&&w.tool;P.guardT=3;P.combo16=(P.combo16||0)+1;P.atkDur16=.38;
+ if(tool){P.move16='swing';P.atkDur16=.45;P.atkT=.45;return}
+ // every 5th hit on someone in reach: grab and throw them over your shoulder
+ const tg=meleeTarget(28);if(tg&&!tg.dead&&!tg.thrown16&&tg.kind!=='cow'&&P.combo16%5===0){P.move16='throw';P.atkDur16=.9;P.atkT=.9;P.atkCD=.95;
+  tg.thrown16={t:0,x0:tg.x,y0:tg.y,x1:P.x-Math.cos(P.a)*14,y1:P.y-Math.sin(P.a)*14,a:P.a};tg.moving=false;return}
+ P.move16=MOVES16[P.combo16%MOVES16.length];P.atkKind=(P.move16==='kick'||P.move16==='round')?'kick':'punch'};
+const _up16=updatePed;updatePed=function(p,dt){const T=p.thrown16;if(T){T.t+=dt;const k=Math.min(1,T.t/.85);
+  if(k<.35){p.x=T.x0;p.y=T.y0;p.alt=k/.35*.4}else{const q=(k-.35)/.65;p.x=T.x0+(T.x1-T.x0)*q;p.y=T.y0+(T.y1-T.y0)*q;p.alt=.4+Math.sin(q*Math.PI)*1.9-q*.4;p.spin16=-q*Math.PI*.95}
+  if(k>=1){p.thrown16=null;p.alt=0;p.spin16=0;p.hp-=45;if(!circleFree(p.x,p.y,5)){p.x=T.x0;p.y=T.y0}shake=Math.max(shake||0,.35);
+   if(p.hp<=0)killPed(p,'player');else{p.state='flee';p.tm=5;p.fx=P.x;p.fy=P.y}toast('💥 Thrown!',.8)}return}
+ return _up16(p,dt)};
 const _sg12=startGame;startGame=async function(){const r=await _sg12.apply(this,arguments);try{setTimeout(intro12Start,250)}catch(e){}return r};
 
 // ===== fx13: Raksha Force heroes in the city, parked helicopters, animals off roads, highways to other states =====
