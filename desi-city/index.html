@@ -3343,6 +3343,23 @@ function leapTick20(dt){const L=LEAP20;L.t+=dt;L.all=(L.all||0)+dt;const ca=Math
 const _up20=updatePlayer;updatePlayer=function(dt,I){if(!LEAP20.on&&P.glide&&P.glide.mode==='leap'){P.glide=null;safeGround()}if(LEAP20.on){try{leapTick20(Math.min(.1,dt||.016))}catch(e){leapEnd20()}return}return _up20.apply(this,arguments)};
 setTimeout(function hook20(){const bj=$('bjump');if(!bj){setTimeout(hook20,1000);return}
  bj.addEventListener('pointerdown',()=>{if(LAY18.edit)return;const now=performance.now();if(now-jumpTap20<450){jumpTap20=0;superLeap20()}else jumpTap20=now})},1500);
+
+// ===== fx21: the nearest chasing police car shouts at you (one speech bubble at a time) =====
+const COP21={v:null,i:0,t:0};
+const COP21_LINES=['Hey man, stop the car! 🚨','Pull over right now!','Stop! Police! 👮','You can\'t escape us!','Hands where I can see them!','Arre ruko! Stop the vehicle!','Last warning, pull over!','Bhai, gaadi roko!'];
+function cop21El(){let e=$('cop21');if(!e){e=document.createElement('div');e.id='cop21';e.style.cssText='position:fixed;left:0;top:0;z-index:30;pointer-events:none;display:none;transform:translate(-50%,-100%);background:#fff;color:#111;font:800 14px system-ui;padding:7px 12px;border-radius:14px;border:2px solid #1e3a8a;box-shadow:0 3px 10px rgba(0,0,0,.35);white-space:nowrap';
+  const tail=document.createElement('div');tail.style.cssText='position:absolute;left:50%;bottom:-9px;margin-left:-8px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:9px solid #1e3a8a';e.appendChild(document.createElement('span'));e.appendChild(tail);document.body.appendChild(e)}return e}
+const _v21=new THREE.Vector3();
+function cop21Tick(dt){const el=cop21El();const hide=()=>{el.style.display='none';COP21.v=null};if(INT.active||!(P.wanted>0))return hide();
+ // only the closest chasing police (car first, otherwise an officer on foot) talks
+ let best=null,bd=900,ped=false;for(const v of vehs)if((v.driver==='cop'||(v.type==='police'&&v.siren&&v.driver))&&!v.dead){const d=Math.hypot(v.x-P.x,v.y-P.y);if(d<bd){bd=d;best=v}}
+ if(!best){bd=500;for(const p of peds)if(p.kind==='police'&&!p.dead&&!p.hidden){const d=Math.hypot(p.x-P.x,p.y-P.y);if(d<bd){bd=d;best=p;ped=true}}}
+ if(!best)return hide();
+ COP21.t-=dt;if(best!==COP21.v||COP21.t<=0){COP21.v=best;COP21.t=3.5;const line=P.veh?COP21_LINES[COP21.i%COP21_LINES.length]:['Stop right there!','Freeze! Police! 👮','Don\'t move!','Arre ruko!'][COP21.i%4];COP21.i++;el.firstChild.textContent='👮 '+line}
+ _v21.set(best.x*S,(ped?groundH(best.x,best.y)+2.1:vehY(best)+1.9),best.y*S).project(camera);
+ if(_v21.z>1||Math.abs(_v21.x)>1.05||Math.abs(_v21.y)>1.05){el.style.display='none';return}
+ el.style.display='block';el.style.left=((_v21.x+1)/2*innerWidth)+'px';el.style.top=((1-_v21.y)/2*innerHeight)+'px'}
+const _up21=updatePlayer;updatePlayer=function(dt){const r=_up21.apply(this,arguments);try{cop21Tick(Math.min(.1,dt||.016))}catch(e){}return r};
 const _sg12=startGame;startGame=async function(){const r=await _sg12.apply(this,arguments);try{setTimeout(intro12Start,250)}catch(e){}return r};
 
 // ===== fx13: Raksha Force heroes in the city, parked helicopters, animals off roads, highways to other states =====
