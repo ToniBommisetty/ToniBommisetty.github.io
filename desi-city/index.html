@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Desi City</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Desi City">
+<meta name="theme-color" content="#1c0a28">
+
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 html,body{margin:0;height:100%;overflow:hidden;background:#111;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;color:#fff;touch-action:none;position:fixed;inset:0}
@@ -4467,5 +4476,6 @@ document.addEventListener('gesturestart',e=>e.preventDefault());
 applyQuality();requestAnimationFrame(loop);
 window.__g={get REAL(){return REAL},setTime:v=>gameTime=v,camera,scene,renderer,get camYaw(){return camYaw},set camYaw(v){camYaw=v},P,dbg:()=>({tp:(e,n)=>{recenter(e,n);const q=m2px(e,n);P.x=q[0];P.y=q[1]},groundH,get W(){return W},MODELS,setSeason,startTsunami,SEASON,doAction,spawnExtras,missionEvent,crime,MISSIONS,startGlide}),get INT(){return INT},get MIS(){return MIS},enterInterior,get W(){return W},get vehs(){return vehs},get peds(){return peds},loadCity,CITIES,openMap,toggleVeh,openShop,inp};
 </script>
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
 </body>
 </html>
