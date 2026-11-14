@@ -787,6 +787,15 @@ function vehGeo(type,col){const key=type+col;if(vgCache.has(key))return vgCache.
 // [height m, body width m, body depth m, sex, waist ratio]
 const PRESETS={m_std:[1.80,.46,.25,'m',.74],m_slim:[1.75,.42,.22,'m',.76],m_musc:[1.83,.52,.30,'m',.6],m_heavy:[1.78,.56,.35,'m',.97],m_old:[1.68,.43,.25,'m',.82],m_tall:[1.95,.50,.29,'m',.72],m_biz:[1.78,.46,.25,'m',.76],m_vend:[1.70,.45,.26,'m',.86],f_std:[1.68,.40,.23,'f',.64],f_slim:[1.65,.36,.21,'f',.62],f_tall:[1.80,.44,.26,'f',.64]};
 const humanMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.74,metalness:0});
+humanMat.onBeforeCompile=sh=>{sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vOP14;').replace('#include <begin_vertex>','#include <begin_vertex>\nvOP14=position;');
+ sh.fragmentShader=sh.fragmentShader.replace('#include <common>',`#include <common>
+varying vec3 vOP14;
+float h14(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
+float n14(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(h14(i),h14(i+vec3(1,0,0)),f.x),mix(h14(i+vec3(0,1,0)),h14(i+vec3(1,1,0)),f.x),f.y),mix(mix(h14(i+vec3(0,0,1)),h14(i+vec3(1,0,1)),f.x),mix(h14(i+vec3(0,1,1)),h14(i+vec3(1,1,1)),f.x),f.y),f.z);}`).replace('#include <color_fragment>',`#include <color_fragment>
+ {vec3 q=vOP14;float folds=n14(vec3(q.x*22.,q.y*6.,q.z*22.))*.6+n14(vec3(q.x*48.,q.y*14.,q.z*48.))*.4;float weave=n14(q*260.);
+  float sat=max(diffuseColor.r,max(diffuseColor.g,diffuseColor.b))-min(diffuseColor.r,min(diffuseColor.g,diffuseColor.b));
+  float skinish=step(.0,diffuseColor.r-diffuseColor.g)*step(.0,diffuseColor.g-diffuseColor.b)*smoothstep(.55,.25,sat)*0.;
+  diffuseColor.rgb*=.86+.24*folds+(weave-.5)*.08;}`)};
 const matCache=new Map();function lam(c){c=c||'#888';let m=matCache.get(c);if(!m){m=new THREE.MeshLambertMaterial({color:c});matCache.set(c,m)}return m}
 const HCAP=new THREE.SphereGeometry(1,14,8,0,TAU,0,Math.PI*.53),HBEARD=new THREE.SphereGeometry(1,14,8,0,TAU,Math.PI*.52,Math.PI*.48),HSPH=new THREE.SphereGeometry(1,14,10),HBOX=new THREE.BoxGeometry(1,1,1);
 function lathe(prof,seg){const q=(typeof QUAL!=='undefined'&&QUAL>=2)?1.6:1;return new THREE.LatheGeometry(prof.map(q=>new THREE.Vector2(Math.max(0,q[0]),q[1])),Math.round((seg||14)*q))}
@@ -799,8 +808,8 @@ function humanGeo(p){
   if(p.hero)return heroGeo(p,key);
   const k=H/1.8,sk=C(p.skin||'#a0662f'),sh=C(p.shirt||'#888'),pa=C(p.pants||'#333'),ha=C(p.hair||'#111'),shoe=C(fem?'#6b3f22':'#1c1c1c'),dk=C('#16110d'),lip=C('#7a3b32'),wh=C('#f1ede4');
   const musc=pk==='m_musc',heavy=pk==='m_heavy';
-  const ar=.043*k*(bw/.46)*(fem?.82:1)*(musc?1.2:heavy?1.15:1);
-  const hwt=bw/2-ar*1.15; // torso half-width without arms
+  const ar0=.043*k*(bw/.46)*(fem?.82:1)*(musc?1.2:heavy?1.15:1),ar=ar0*1.22;
+  const hwt=bw/2-ar0*1.15; // torso half-width without arms
   const dz=bd/(hwt*2); // depth ratio (applied on x)
   const hipH=.535*H,shY=.275*H,Lu=.172*H,Lf=.152*H,Lt=.245*H,Ls=.25*H,shZ=hwt*.93+ar*.75,hipZ=hwt*.42;
   const longS=!!p.sleeves,frontX=hwt*dz;
@@ -855,13 +864,13 @@ function humanGeo(p){
   // ----- upper arm (pivot shoulder) -----
   const Ua=new GeoBuf();const jcA=p.jacket?C(p.jacket):p.coat?C(p.coat):null,armTop=jcA||sh,fullS=longS||!!jcA||!!p.hood;const sleeveY=p.tank&&!jcA?9:(fullS||p.rolled)?-9:-Lu*(p.tee?.38:.5);
   addGeoF(Ua,lathe([[0,.03],[ar*.95,.02],[ar*1.06,-Lu*.15],[ar*(musc?1.22:1.12),-Lu*.45],[ar*.9,-Lu*.82],[ar*.78,-Lu],[0,-Lu-.02]],12),M(0,0,0),(x,y)=>y>sleeveY?armTop:sk);
-  addGeoF(Ua,HSPH,M(0,-.01,0,0,0,0,ar*1.1,ar*1.25,ar*1.05),()=>p.tank&&!jcA?sk:armTop);
+  addGeoF(Ua,HSPH,M(0,-.025,0,0,0,0,ar*.98,ar*1.05,ar*.96),()=>p.tank&&!jcA?sk:armTop);
   // ----- forearm + hand (pivot elbow) -----
   const Fa=new GeoBuf();const fr=ar*.86;
   addGeoF(Fa,lathe([[0,.02],[fr*.92,.01],[fr*1.06,-Lf*.25],[fr*.74,-Lf*.88],[fr*.64,-Lf],[0,-Lf-.01]],12),M(0,0,0),(x,y)=>fullS?(y<-Lf*.9&&jcA?armTop.clone().multiplyScalar(.8):armTop):(p.rolled&&y>-Lf*.2?(y>-Lf*.12?sh:sh.clone().multiplyScalar(1.25)):sk));
   addGeoF(Fa,HSPH,M(.004,-Lf-.068*k,0,0,0,0,.03*k,.078*k,.019*k),()=>sk);addGeoF(Fa,HSPH,M(.022*k,-Lf-.04*k,0,0,0,0,.012*k,.035*k,.012*k),()=>sk);
   // ----- thigh (pivot hip) -----
-  const Th=new GeoBuf();const lr=.073*k*(bw/.46)*(fem?.98:1)*(heavy?1.15:musc?1.1:1);
+  const Th=new GeoBuf();const lr=.082*k*(bw/.46)*(fem?.98:1)*(heavy?1.15:musc?1.1:1);
   addGeoF(Th,lathe([[0,.05],[lr*1.02,.04],[lr*1.12,-Lt*.18],[lr*.98,-Lt*.58],[lr*.72,-Lt],[0,-Lt-.03]],12),M(0,0,0),(x,y)=>p.lungi?C(p.lungi):p.kurta&&y>-Lt*.5?sh:pa);
   if(p.cargo&&!p.lungi)for(const s of[1,-1])addGeoF(Th,HBOX,M(0,-Lt*.5,s*lr*.98,0,0,0,lr*.9,Lt*.24,.03*k),()=>pa.clone().multiplyScalar(.82));
   if(p.belt&&!p.lungi)addGeoF(Th,HBOX,M(-lr*.2,-Lt*.12,lr*.88,0,0,.15,lr*.7,Lt*.12,.01),()=>pa.clone().multiplyScalar(.75));
@@ -1006,7 +1015,7 @@ function heroGeo(p,key){const[H,bw,bd,sex,waist]=PRESETS.m_std;const k=H/1.8,C_=
   if(!V)addGeoC(Fa,lathe([[fr*1.12,-Lf*.1],[fr*1.16,-Lf*.16],[fr*1.12,-Lf*.22],[fr*.9,-Lf*.22]],20),M(0,0,0),()=>C_.CUFF);
   addGeoC(Fa,HSPH,M(.004,-Lf-.068*k,0,0,0,0,.03*k,.078*k,.02*k),()=>C_.SKIN);addGeoC(Fa,HSPH,M(.022*k,-Lf-.04*k,0,0,0,0,.012*k,.035*k,.012*k),()=>C_.SKIN);
   const Th=new GeoBuf(),lr=.075*k;addGeoC(Th,lathe([[0,.05],[lr*1.02,.04],[lr*1.12,-Lt*.18],[lr*.98,-Lt*.58],[lr*.72,-Lt],[0,-Lt-.03]],20),M(0,0,0),(x,y)=>dress?[C_.WHITE,C(p.lungi||'#f4f1e6')]:y>-Lt*.5&&!V?C_.PRINT:C_.TROUSER);
-  const Sn=new GeoBuf(),cr=lr*.72;addGeoC(Sn,lathe([[0,.03],[cr*.98,.015],[cr*1.14,-Ls*.3],[cr*.78,-Ls*.82],[cr*.66,-Ls],[0,-Ls-.01]],20),M(0,0,0),()=>dress?C_.SKIN:C_.TROUSER);
+  const Sn=new GeoBuf(),cr=lr*.78;addGeoC(Sn,lathe([[0,.03],[cr*.98,.015],[cr*1.14,-Ls*.3],[cr*.78,-Ls*.82],[cr*.66,-Ls],[0,-Ls-.01]],20),M(0,0,0),()=>dress?C_.SKIN:C_.TROUSER);
   addGeoC(Sn,HSPH,M(.05*k,-Ls-.035*k,0,0,0,0,.115*k,.034*k,.043*k),()=>C_.SKIN);addGeoC(Sn,HBOX,M(.05*k,-Ls-.07*k,0,0,0,0,.26*k,.018,.095*k),()=>C_.LEATHER);
   addGeoC(Sn,HBOX,M(.01*k,-Ls-.045*k,0,0,0,0,.035*k,.03*k,.1*k),()=>C_.LEATHER);addGeoC(Sn,HBOX,M(.12*k,-Ls-.052*k,0,0,0,0,.03*k,.022*k,.092*k),()=>C_.LEATHER);
   const e={torso:Tb.build(),ua:Ua.build(),fa:Fa.build(),th:Th.build(),sn:Sn.build(),d:{H,hipH,shY,Lu,Lf,Lt,Ls,shZ,hipZ},refs:1,key,mat:heroAtlas(shirt,skin,{face:F,vest:V})};
@@ -2958,7 +2967,7 @@ function fx9Init(){try{for(const m of GROUND_MATS)groundDetail9(m)}catch(e){}}
 // ===== fx10: modern street outfits for the crowd (jackets, hoodies, tank tops, long coats, jeans, boots, caps, bandanas) =====
 const OUT10={jack:['#1d1d1f','#3b2a1e','#4a3b2a','#2c3e50','#4b5320','#5a5a5a','#6b1e1e','#c9c2b0'],denim:['#2f4b7c','#3b5b8c','#22314f','#4a6a9a','#1f2a3a'],
  dark:['#1d1d1f','#2b2b2b','#3d3d3d','#2f3a2f','#3b3226'],boots:['#1b1714','#3b2a1e','#4a3b2a','#2a2a2a'],cap:['#c0392b','#1d1d1f','#2c3e50','#f2f2f2','#4b5320','#8e5ea2'],
- tee:['#f2f2f2','#1d1d1f','#7f8c8d','#4b5320','#8b0000','#d9d0c1'],band:['#a83232','#2c3e50','#6b1e1e','#3b3b3b']};
+ tee:['#f2f2f2','#1d1d1f','#ff7eb6','#4fd1c5','#ffd166','#9b8cff','#ff8c69','#7bd389','#5aa9e6','#e85d75','#2c3e50','#f6a6b2'],band:['#a83232','#2c3e50','#6b1e1e','#3b3b3b']};
 function style10(p){const r=rand,pk=a=>a[Math.floor(r()*a.length)];
  if(p.fem){if(p.saree||r()<.4)return;p.pants=pk(OUT10.denim);p.belt=r()<.7;p.boots=r()<.45?pk(OUT10.boots):null;
   if(r()<.5){p.tank=true;p.shirt=pk(['#1d1d1f','#4b5320','#5a5a5a','#8b0000','#2c3e50']);p.sleeves=0}else{p.jacket=pk(OUT10.jack);p.shirt=pk(OUT10.tee)}
