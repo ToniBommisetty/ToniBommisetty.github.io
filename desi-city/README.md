@@ -102,6 +102,7 @@ With powers come missions:
 - Sports car model: "Ferrari 458 Italia" by vicent091036 (CC BY 4.0), via the three.js examples.
 - Hero character and animations: "Soldier" from Mixamo, via the three.js examples.
 - Sunset sky (HDR): "Venice Sunset" from Poly Haven (CC0).
+- Fighting motion capture: CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu), BVH conversion by Bruce Hahne.
 - three.js (MIT), Trystero (MIT).
 
 ## Author
