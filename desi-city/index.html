@@ -3308,33 +3308,39 @@ setTimeout(layout18Apply,1500);setInterval(()=>{if(!LAY18.edit)layout18Apply()},
 // ===== fx20: double-tap JUMP = super leap: shoot into the sky and land about 5 km away =====
 const LEAP20={on:false};let jumpTap20=0;
 function superLeap20(){if(LEAP20.on||P.veh||P.dead||INT.active||P.glide||!W)return;
- const a=camYaw;const g0=groundH(P.x,P.y);LEAP20.on=true;Object.assign(LEAP20,{t:0,ph:0,a,x0:P.x,y0:P.y,g0,top:g0+230,moved:0});P.jy=0;P.jv=0;inp.jump=false;
+ const a=camYaw;const g0=groundH(P.x,P.y);LEAP20.on=true;Object.assign(LEAP20,{id:(LEAP20.id||0)+1,all:0,t:0,ph:0,a,x0:P.x,y0:P.y,g0,top:g0+230,moved:0});P.jy=0;P.jv=0;inp.jump=false;
  P.glide={mode:'leap',alt:g0,a};P.a=a;shake=Math.max(shake,1.2);try{sfx.whoosh?sfx.whoosh():beep&&beep()}catch(e){}
  for(let k=0;k<14;k++)parts.push({x:P.x,y:P.y,vx:rr2(-90,90),vy:rr2(-90,90),life:.5,max:.5,type:'spark'});toast('🚀 SUPER LEAP!',1.2)}
 const PXM20=1/S; // world px per metre
-async function leapHop20(){const L=LEAP20;const ca=Math.cos(L.a),sa=Math.sin(L.a);
- if(W.real&&REAL){const[e,n]=px2m(P.x,P.y);const b=REAL.man.bounds;const de=ca,dn=-sa;let e2=e+de*5000,n2=n+dn*5000;
-  e2=clamp(e2,b.minx+120,b.maxx-120);n2=clamp(n2,b.miny+120,b.maxy-120);L.moved=Math.round(Math.hypot(e2-e,n2-n))+140;
-  // aim to land 70 m short so we glide down onto the spot
-  const le=e2-de*70,ln=n2-dn*70;const nE=Math.round(le/128)*128,nN=Math.round(ln/128)*128;
-  realBusy=true;try{await ensureTiles(REAL,nE,nN);recenter(nE,nN)}catch(e){}finally{realBusy=false}
-  const[px,py]=m2px(le,ln);P.x=px;P.y=py}
- else{const LIM=N*T;const d=5000*PXM20;let nx=clamp(P.x+ca*d,300,LIM-300),ny=clamp(P.y+sa*d,300,LIM-300);L.moved=Math.round(Math.hypot(nx-P.x,ny-P.y)/PXM20)+140;P.x=nx-ca*70*PXM20;P.y=ny-sa*70*PXM20}
+function flash20(o){let f=$('flash20');if(!f){f=document.createElement('div');f.id='flash20';f.style.cssText='position:fixed;inset:0;background:#fff;pointer-events:none;z-index:55;opacity:0;transition:opacity .25s';document.body.appendChild(f)}f.style.opacity=o}
+// furthest point (up to 5 km) along the direction that still has mapped streets
+function leapTarget20(e,n,de,dn){let NV=null;try{NV=navBuild()}catch(_){}
+ // land on a real road: the furthest road point (up to 5 km) roughly in the direction you face
+ if(NV&&NV.X&&NV.X.length){let best=null,bs=-1;for(let i=0;i<NV.X.length;i++){const dx=NV.X[i]-e,dy=NV.Y[i]-n,d=Math.hypot(dx,dy);if(d<250||d>5000)continue;if(REAL&&REAL.man.bounds){const b=REAL.man.bounds;if(NV.X[i]<b.minx+250||NV.X[i]>b.maxx-250||NV.Y[i]<b.miny+250||NV.Y[i]>b.maxy-250)continue}const c=(dx*de+dy*dn)/d;if(c<.82)continue;const sc=d*c*c;if(sc>bs){bs=sc;best=[NV.X[i],NV.Y[i],d]}}if(best)return best}
+ return null}
+async function leapHop20(){const L=LEAP20,my=L.id;const ca=Math.cos(L.a),sa=Math.sin(L.a);let ok=false;
+ try{if(W.real&&REAL){const[e,n]=px2m(P.x,P.y);const de=ca,dn=-sa;const tg=leapTarget20(e,n,de,dn);
+   if(tg){const[e2,n2,d]=tg;const le=e2-de*70,ln=n2-dn*70;const nE=Math.round(le/128)*128,nN=Math.round(ln/128)*128;
+    realBusy=true;try{await Promise.race([ensureTiles(REAL,nE,nN),new Promise(r=>setTimeout(r,6000))]);if(L.id!==my||!L.on)return;recenter(nE,nN);const[px,py]=m2px(le,ln);P.x=px;P.y=py;L.moved=Math.round(d)+60;ok=true}finally{realBusy=false}}}
+  else if(!W.real){const LIM=N*T;const d=5000*PXM20;let nx=clamp(P.x+ca*d,300,LIM-300),ny=clamp(P.y+sa*d,300,LIM-300);L.moved=Math.round(Math.hypot(nx-P.x,ny-P.y)/PXM20)+60;P.x=nx-ca*70*PXM20;P.y=ny-sa*70*PXM20;ok=true}}catch(e){console.warn('leap',e)}
+ if(L.id!==my||!L.on)return;if(!ok){L.moved=Math.round(Math.hypot(P.x-L.x0,P.y-L.y0)/PXM20);toast('🛣️ No more map that way, coming down here',1.6)}
  L.ph=2;L.t=0;L.top=groundH(P.x,P.y)+230}
-function leapTick20(dt){const L=LEAP20;L.t+=dt;const ca=Math.cos(L.a),sa=Math.sin(L.a);const fl=$('i12flash');
+function leapEnd20(){const L=LEAP20;L.on=false;P.glide=null;flash20(0);const LIM=N*T;if(!(P.x>40&&P.y>40&&P.x<LIM-40&&P.y<LIM-40)){P.x=clamp(P.x,LIM*.3,LIM*.7);P.y=clamp(P.y,LIM*.3,LIM*.7)}
+ if(tileAt(P.x,P.y)===BD||!circleFree(P.x,P.y,5)){const w=walkNear(W.t,P.x,P.y);if(w){P.x=w[0];P.y=w[1]}}}
+function leapTick20(dt){const L=LEAP20;L.t+=dt;L.all=(L.all||0)+dt;const ca=Math.cos(L.a),sa=Math.sin(L.a);
+ if(L.all>14){leapEnd20();toast('🪂 Landed',1);return}
  if(L.ph===0){const k=Math.min(1,L.t/2.3),ek=1-Math.pow(1-k,3);P.glide.alt=L.g0+(L.top-L.g0)*ek;P.x+=ca*30*PXM20*dt;P.y+=sa*30*PXM20*dt;
-  if(k>.8&&fl){fl.style.opacity=(k-.8)*4}
-  if(k>=1){L.ph=1;leapHop20()}}
- else if(L.ph===1){if(fl)fl.style.opacity=.85}
- else{if(fl&&L.t<.6)fl.style.opacity=Math.max(0,.85-L.t*1.5);else if(fl)fl.style.opacity=0;
+  if(k>.8)flash20(Math.min(.9,(k-.8)*4.5));
+  if(k>=1){L.ph=1;L.t=0;leapHop20()}}
+ else if(L.ph===1){flash20(.9);if(L.t>7){L.ph=2;L.t=0;L.top=P.glide.alt}}
+ else{flash20(L.t<.5?.9-L.t*1.8:0);
   const k=Math.min(1,L.t/2.4),g=groundH(P.x,P.y);P.glide.alt=g+(L.top-g)*(1-k*k);P.x+=ca*30*PXM20*dt;P.y+=sa*30*PXM20*dt;
-  if(k>=1){P.glide=null;LEAP20.on=false;if(tileAt(P.x,P.y)===BD){const w=walkNear(W.t,P.x,P.y);if(w){P.x=w[0];P.y=w[1]}}shake=Math.max(shake,2.2);
+  if(k>=1){leapEnd20();shake=Math.max(shake,2.2);
    for(let i=0;i<24;i++){const an=i/24*TAU;parts.push({x:P.x,y:P.y,vx:Math.cos(an)*160,vy:Math.sin(an)*160,life:.6,max:.6,type:'spark'})}
-   // landing shockwave knocks nearby people down
    for(const p of peds)if(!p.dead&&p.kind!=='raksha'&&Math.hypot(p.x-P.x,p.y-P.y)<90){const an=Math.atan2(p.y-P.y,p.x-P.x);const nx=p.x+Math.cos(an)*30,ny=p.y+Math.sin(an)*30;if(circleFree(nx,ny,5)){p.x=nx;p.y=ny}if(p.kind==='civ'){p.state='flee';p.tm=4;p.fx=P.x;p.fy=P.y}}
    toast('💥 Landed '+(L.moved>=1000?(L.moved/1000).toFixed(1)+' km':L.moved+' m')+' away!',2)}}
  P.moving=false;P.run=false}
-const _up20=updatePlayer;updatePlayer=function(dt,I){if(LEAP20.on){try{leapTick20(Math.min(.1,dt||.016))}catch(e){LEAP20.on=false;P.glide=null}return}return _up20.apply(this,arguments)};
+const _up20=updatePlayer;updatePlayer=function(dt,I){if(!LEAP20.on&&P.glide&&P.glide.mode==='leap'){P.glide=null;safeGround()}if(LEAP20.on){try{leapTick20(Math.min(.1,dt||.016))}catch(e){leapEnd20()}return}return _up20.apply(this,arguments)};
 setTimeout(function hook20(){const bj=$('bjump');if(!bj){setTimeout(hook20,1000);return}
  bj.addEventListener('pointerdown',()=>{if(LAY18.edit)return;const now=performance.now();if(now-jumpTap20<450){jumpTap20=0;superLeap20()}else jumpTap20=now})},1500);
 const _sg12=startGame;startGame=async function(){const r=await _sg12.apply(this,arguments);try{setTimeout(intro12Start,250)}catch(e){}return r};
