@@ -3364,14 +3364,14 @@ const _up21=updatePlayer;updatePlayer=function(dt){const r=_up21.apply(this,argu
 // ===== fx22: green direction signboards at road junctions (real places, arrows and distances) =====
 const SIGN22={g:null,key:'',t:0};
 const SIGN22_PRI={hwy:10,place:9,airport:9,hospital:8,stadium:7,mall:7,temple:7,bigtemple:9,theatre:6,court:5,hotel:4,bank:3,petrol:3,masjid:4,church:4,restaurant:2,tea:2};
-function sign22Tex(rows){const c=document.createElement('canvas');c.width=512;c.height=70+rows.length*76;const g=c.getContext('2d');
- g.fillStyle='#0b6b2e';g.beginPath();g.roundRect(0,0,512,c.height,22);g.fill();g.strokeStyle='#fff';g.lineWidth=7;g.beginPath();g.roundRect(9,9,494,c.height-18,16);g.stroke();
- g.fillStyle='#ffd34d';g.font='bold 26px Arial';g.textAlign='center';g.fillText(W.name?String(W.name).toUpperCase():'',256,48);
- rows.forEach((r,i)=>{const y=70+i*76+44;g.fillStyle='rgba(255,255,255,.18)';if(i)g.fillRect(24,70+i*76,464,2);
+function sign22Tex(rows){const c=document.createElement('canvas');c.width=768;c.height=70+rows.length*76;const g=c.getContext('2d');
+ g.fillStyle='#0b6b2e';g.beginPath();g.roundRect(0,0,768,c.height,22);g.fill();g.strokeStyle='#fff';g.lineWidth=7;g.beginPath();g.roundRect(9,9,750,c.height-18,16);g.stroke();
+ g.fillStyle='#ffd34d';g.font='bold 26px Arial';g.textAlign='center';g.fillText(W.name?String(W.name).toUpperCase():'',384,48);
+ rows.forEach((r,i)=>{const y=70+i*76+44;g.fillStyle='rgba(255,255,255,.18)';if(i)g.fillRect(24,70+i*76,720,2);
   g.fillStyle='#fff';g.font='bold 46px Arial';g.textAlign='left';g.fillText(r.arrow,26,y+4);
-  g.font='bold 32px Arial';let nm=r.name;while(g.measureText(nm).width>290&&nm.length>4)nm=nm.slice(0,-2);if(nm!==r.name)nm=nm.trim()+'…';g.fillText(nm,86,y);
-  g.font='bold 28px Arial';g.textAlign='right';g.fillStyle='#ffd34d';g.fillText(r.km,488,y)});
- const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return[t,c.height/512]}
+  g.font='bold 38px Arial';let nm=r.name;while(g.measureText(nm).width>520&&nm.length>4)nm=nm.slice(0,-2);if(nm!==r.name)nm=nm.trim()+'…';g.fillText(nm,86,y);
+  g.font='bold 34px Arial';g.textAlign='right';g.fillStyle='#ffd34d';g.fillText(r.km,744,y)});
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return[t,c.height/768]}
 function sign22Fmt(d){return d>=1000?(d/1000).toFixed(1)+' km':Math.round(d/10)*10+' m'}
 function sign22Build(){if(!W||!W.real||!REAL)return;const NV=navBuild();if(!NV||!NV.X.length)return;const[qe,qn]=px2m(P.x,P.y);const key=REAL.cE+','+REAL.cN+','+NV.X.length+','+(FX13.hw?FX13.hw.gates.length:0)+','+Math.round(qe/120)+','+Math.round(qn/120);if(key===SIGN22.key&&SIGN22.g)return;SIGN22.key=key;
  if(SIGN22.g){scene.remove(SIGN22.g);SIGN22.g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose()}})}
@@ -3395,24 +3395,15 @@ function sign22Build(){if(!W||!W.real||!REAL)return;const NV=navBuild();if(!NV||
   if(rows.length<2)break;
   // place on the left side of the approach road (India drives on the left), 12 m before the junction
   const le=-fn,ln=fe;let px=0,py=0,okp=false;for(const off of[8,10,6.5,12]){const se=je-fe*12+le*off,sn=jn-fn*12+ln*off;[px,py]=m2px(se,sn);const tt=tileAt(px,py);if(tt!==BD&&tt!==RD&&tt!==WA){okp=true;break}}if(!okp)continue;
-  const[tex,asp]=sign22Tex(rows);const w=5.4,h=w*asp,gh=groundH(px,py);const SG=new THREE.Group();G.add(SG);
-  const board=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide,transparent:true}));
+  const[tex,asp]=sign22Tex(rows);const w=7.2,h=w*asp,gh=groundH(px,py);const SG=new THREE.Group();G.add(SG);
+  const board=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex,side:THREE.FrontSide}));
   const ry=Math.atan2(-fe,fn);board.position.set(px*S,gh+2.6+h/2,py*S);board.rotation.y=ry;SG.add(board);
-  const back=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({color:0x4a5258,roughness:.6,transparent:true}));back.position.copy(board.position);back.rotation.y=ry+Math.PI;back.translateZ(.03);SG.add(back);
-  for(const s of[-1,1]){const m=new THREE.Mesh(poleG,pole);m.scale.set(1,2.6+h,1);m.position.set(px*S+Math.cos(ry)*s*w*.38,gh+(2.6+h)/2,py*S-Math.sin(ry)*s*w*.38);m.material=pole.clone();m.material.transparent=true;m.translateZ(-.16);SG.add(m)}
+  const back=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({color:0x4a5258,roughness:.6}));back.position.copy(board.position);back.rotation.y=ry+Math.PI;back.translateZ(.03);SG.add(back);
+  for(const s of[-1,1]){const m=new THREE.Mesh(poleG,pole);m.scale.set(1,2.6+h,1);m.position.set(px*S+Math.cos(ry)*s*(w/2+.12),gh+(2.6+h)/2,py*S-Math.sin(ry)*s*(w/2+.12));m.translateZ(-.1);SG.add(m)}
   made++}
   if(made)placed.push([je,jn])}}
 const _bc22=buildCity3D;buildCity3D=function(){const r=_bc22.apply(this,arguments);try{SIGN22.key='';sign22Build()}catch(e){console.warn('sign22',e)}return r};
 const _up22=updatePlayer;updatePlayer=function(dt){const r=_up22.apply(this,arguments);try{SIGN22.t-=dt||.016;if(SIGN22.t<=0){SIGN22.t=3;if(!INT.active)sign22Build();if(SIGN22.g)SIGN22.g.visible=!INT.active}}catch(e){}return r};
-// signboards fade out when they block the view of the player or sit right in front of the camera
-const FADE22={rc:new THREE.Raycaster(),v:new THREE.Vector3(),d:new THREE.Vector3()};
-function sign22Fade(dt){if(!SIGN22.g||!SIGN22.g.visible||!camera)return;const hy=groundH(P.x,P.y)+1.2+(P.jy||0);const pv=FADE22.v.set(P.x*S,hy,P.y*S);
- const dir=FADE22.d.copy(pv).sub(camera.position);const dist=dir.length();dir.normalize();FADE22.rc.set(camera.position,dir);FADE22.rc.far=dist;
- for(const sg of SIGN22.g.children){const b=sg.children[0];if(!b)continue;let target=1;
-  if(FADE22.rc.intersectObject(b,false).length)target=.18;else{const pd=Math.hypot(b.position.x-pv.x,b.position.z-pv.z),cd=camera.position.distanceTo(b.position);target=Math.min(pd<16?Math.max(.25,(pd-8)/8):1,cd<9?Math.max(.18,(cd-4)/5):1)}
-  const cur=sg.userData.op==null?1:sg.userData.op;const op=cur+(target-cur)*Math.min(1,(dt||.016)*8);sg.userData.op=op;
-  for(const o of sg.children){o.material.opacity=op;o.material.depthWrite=op>.95}}}
-const _up22b=updatePlayer;updatePlayer=function(dt){const r=_up22b.apply(this,arguments);try{sign22Fade(dt)}catch(e){}return r};
 const _sg12=startGame;startGame=async function(){const r=await _sg12.apply(this,arguments);try{setTimeout(intro12Start,250)}catch(e){}return r};
 
 // ===== fx13: Raksha Force heroes in the city, parked helicopters, animals off roads, highways to other states =====
