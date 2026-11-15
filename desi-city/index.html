@@ -2379,7 +2379,7 @@ function heroMove(dt,I){const g=P.glide;P.atkT=(P.atkT||0)-dt;P.atkCD=(P.atkCD||
   if(g.mode==='swing'&&g.t>g.dur+1.5){P.glide=null;safeGround();return}
   if(g.mode==='swing'){g.t+=dt;const k=Math.min(1,g.t/g.dur),e=k*k*(3-2*k);P.x=g.sx+(g.tx-g.sx)*e;P.y=g.sy+(g.ty-g.sy)*e;g.alt=g.s0+(g.s1-g.s0)*e+Math.sin(k*Math.PI)*Math.max(4,Math.hypot(g.tx-g.sx,g.ty-g.sy)*S*.18);P.a=g.a;camYaw=lerpA(camYaw,g.a,dt*2);
     if(k>=1){goRoof(g.b);P.x=g.tx;P.y=g.ty;if(!inB(g.b,P.x,P.y))goRoof(g.b)}return}
-  if(g.mode==='fall'){g.alt-=dt*14;const gh=groundH(P.x,P.y);if(g.alt<=gh){P.glide=null;safeGround();damagePlayer(12);toast('Ouch! Hard landing',1)}return}
+  if(g.mode==='chute'){chuteTick28(g,dt,mv,dir,I);return}if(g.mode==='fall'){g.alt-=dt*14;const gh=groundH(P.x,P.y);if(g.alt<=gh){P.glide=null;safeGround();damagePlayer(12);toast('Ouch! Hard landing',1)}return}
   if(g.mode==='fly'){const gh=groundH(P.x,P.y);const sp=(mv?95*Math.max(.4,I.m):0)*(P.run||I.sprint?1.6:1);if(mv){P.x+=Math.cos(dir)*sp*dt;P.y+=Math.sin(dir)*sp*dt;P.a=lerpA(P.a,dir,dt*6)}P.flySp=sp;
     const tgt=g.tgt<0?gh:gh+g.tgt;g.alt+=(tgt-g.alt)*Math.min(1,dt*1.6);if(g.tgt<0&&g.alt-gh<.3){const b=roofList().find(q=>inB(q,P.x,P.y));if(b){goRoof(b,'🛬 Landed on the roof');P.x=P.x;return}P.glide=null;safeGround();toast('🛬 Landed',.9);return}
     if(I.fire&&P.fireT<=0){P.fireT=.35;laser()}carryTick(dt)}}
@@ -2539,7 +2539,7 @@ const _dfm4=drawFriendsMM;drawFriendsMM=function(mmx,toM){_dfm4(mmx,toM);try{mmx
 function fx3Tick(dt){try{powerTick(dt);syncSuit();if(!INT.active&&!P.glide&&!P.veh&&!P.dead){if(tileAt(P.x,P.y)===BD){stuckT+=dt;if(stuckT>1.2){stuckT=0;safeGround()}}else stuckT=0}if(!INT.active){doorIcons();orbBeams()}powerChip();if(INT.active){const al=$('alert');if(al)al.style.display='none'}if(!INT.active){orbsTick(dt);crimeTick(dt);callTick(dt);missionTick2(dt);seaTick(dt);shipTick()}
   if(FX3.beam&&FX3.beamT>0){FX3.beamT-=dt;if(FX3.beamT<=0)FX3.beam.visible=false}
   // web line while swinging
-  const g=P.glide;if(g&&g.mode==='swing'&&playerMesh){if(!FX3.line){FX3.line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:0xf2f2f2}));scene.add(FX3.line)}const p=FX3.line.geometry.attributes.position;p.setXYZ(0,P.x*S,g.alt+1.9,P.y*S);p.setXYZ(1,g.tx*S,groundH(g.tx,g.ty)+g.b.h+9,g.ty*S);p.needsUpdate=true;FX3.line.visible=true}else if(FX3.line)FX3.line.visible=false;
+  const g=P.glide;if(g&&g.mode==='swing'&&playerMesh){if(!FX3.line){FX3.line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:0xf2f2f2}));scene.add(FX3.line)}const p=FX3.line.geometry.attributes.position;p.setXYZ(0,P.x*S,g.alt+1.9,P.y*S);p.setXYZ(1,g.tx*S,groundH(g.tx,g.ty)+g.b.h+9,g.ty*S);p.needsUpdate=true;FX3.line.visible=true;web28(FX3.line)}else{if(FX3.line)FX3.line.visible=false;web28(null)}
   if(P._suit){const c=P._suit.getObjectByName('cape');if(c)c.rotation.z=(g&&g.mode==='fly'?1.25:.12)+Math.sin(tsec*7)*.06}
   if(INT.active&&INT.fan)INT.fan.rotation.y+=dt*6;if(INT.active&&INT.tv){INT.tv.material.emissiveIntensity=.6+Math.sin(tsec*9)*.25+Math.sin(tsec*3.1)*.2}if(INT.active&&INT.heroPose&&P.moving)INT.heroPose=null;
   const b1=$('bpow1'),b2=$('bpow2'),pt=$('ptimer');if(b1){const pw=P.power,sh1=!!pw&&pw!=='speed'&&pw!=='strength'&&!P.veh&&!P.dead&&!INT.active;b1.style.display=sh1?'flex':'none';if(sh1)b1.innerHTML=pw==='web'?'<span>🕸️</span>WEB':(g&&g.mode==='fly'?(g.tgt<9?'<span>⬆️</span>HIGHER':g.tgt<50&&g.tgt>0?'<span>⬆️</span>HIGHER':'<span>🛬</span>LAND'):'<span>✈️</span>FLY');
@@ -3621,7 +3621,7 @@ const _up26=updatePlayer;updatePlayer=function(dt){dt=Math.min(.1,dt||.016);
  return r};
 // ===== fx27: UFO with a pilot that hunts you, family that always shows up, clean HUD =====
 (function(){const st=document.createElement('style');st.textContent=`
-#bq,#onl,#bzomb,#pchip,#lhint{display:none!important}
+#bq,#onl,#bzomb,#pchip,#lhint,#ptimer{display:none!important}
 #bmenu27 span{font-size:12px!important;font-weight:800}#bmenu27{position:absolute;top:calc(env(safe-area-inset-top) + 192px);right:calc(env(safe-area-inset-right) + 34px);width:64px;height:30px;border-radius:15px;font-size:12px;font-weight:800;flex-direction:row;gap:4px}
 #chatbar.np27{display:none!important}#mmlabel{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #col27{position:absolute;left:calc(env(safe-area-inset-left) + 62px);top:calc(env(safe-area-inset-top) + 88px);display:flex;flex-direction:column;align-items:flex-start;gap:5px;pointer-events:none;z-index:6}
@@ -3728,6 +3728,56 @@ function tags27(){const hide=INT.active||P.dead;
  if(FAM.on){const d=Math.round(Math.hypot(FAM.x-P.x,FAM.y-P.y)*S);h+=(h?'<br>':'')+(FAM.st==='drive'?'🚐 Dada & Meera coming · '+d+' m':FAM.st==='park'?'👴👧 Family is helping you':'')}
  if(hide)h='';if(s.innerHTML!==h)s.innerHTML=h;s.style.display=h?'block':'none'}
 const _up27=updatePlayer;updatePlayer=function(dt){const r=_up27.apply(this,arguments);try{hud27();famAuto27();tags27()}catch(e){console.warn('fx27',e)}return r};
+
+// ===== fx28: parachute (roof jumps, bailing out of the helicopter), web shot from the hand =====
+let chute28=null,hand28b=null,web28m=null;
+function chuteMesh28(){const g=new THREE.Group();const geo=new THREE.SphereGeometry(3.4,24,8,0,Math.PI*2,0,1.05).toNonIndexed();const cols=[0xff9933,0xffffff,0x138808];const c=[],pos=geo.attributes.position;
+ for(let i=0;i<pos.count;i+=3){const x=(pos.getX(i)+pos.getX(i+1)+pos.getX(i+2)),z=(pos.getZ(i)+pos.getZ(i+1)+pos.getZ(i+2));const a=Math.atan2(z,x);const k=Math.floor(((a+Math.PI)/(Math.PI*2))*12)%3;const col=new THREE.Color(cols[k]);for(let j=0;j<3;j++)c.push(col.r,col.g,col.b)}geo.computeVertexNormals();geo.setAttribute('color',new THREE.Float32BufferAttribute(c,3));
+ const can=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.7,side:THREE.DoubleSide}));can.scale.set(1,.55,1);can.position.y=-1.1;can.castShadow=true;g.add(can);
+ const pts=[];const ry=-1.1+Math.cos(1.05)*3.4*.55,rr=Math.sin(1.05)*3.4;for(let i=0;i<12;i++){const a=i/12*Math.PI*2;pts.push(new THREE.Vector3(Math.cos(a)*rr,ry,Math.sin(a)*rr),new THREE.Vector3(Math.cos(a)*.25,-3.0,Math.sin(a)*.12))}
+ g.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x222222})));return g}
+
+function chuteTick28(g,dt,mv,dir,I){g.t+=dt;const gh=groundH(P.x,P.y);
+ if(!g.open&&(g.t>=g.ft||(g.alt-gh<6&&g.t>.25&&g.vz<-4))){g.open=true;g.ot=0;try{tone(500,.12,.05,'triangle')}catch(e){}}
+ if(g.open){g.ot+=dt;g.vz+=(-4.2-g.vz)*Math.min(1,dt*3.5);const sp=mv?64*Math.max(.5,I.m):16,td=mv?dir:g.a;const k=Math.min(1,dt*1.6);g.vx+=(Math.cos(td)*sp-g.vx)*k;g.vy+=(Math.sin(td)*sp-g.vy)*k;if(mv)g.a=lerpA(g.a,dir,dt*2.2)}
+ else{g.vz=Math.max(-30,g.vz-14*dt);const f=Math.pow(.6,dt);g.vx*=f;g.vy*=f}
+ const nx=P.x+g.vx*dt,ny=P.y+g.vy*dt;const b=heliRoof25(nx,ny);const top=b?groundH(b.cx,b.cy)+b.h:-1e9;
+ if(b&&g.alt<top-.4){g.vx*=-.2;g.vy*=-.2}else{P.x=nx;P.y=ny}
+ g.alt+=g.vz*dt;if(Math.hypot(g.vx,g.vy)>6)P.a=lerpA(P.a,Math.atan2(g.vy,g.vx),dt*5);P.moving=false;
+ const b2=heliRoof25(P.x,P.y);if(b2){const t2=groundH(b2.cx,b2.cy)+b2.h;if(g.alt<=t2+.02&&g.alt>t2-2){const x=P.x,y=P.y;goRoof(b2);if(inB(b2,x,y)){P.x=x;P.y=y}land28(g);return}}
+ if(g.alt<=gh){P.glide=null;P.jy=0;safeGround();land28(g)}}
+function land28(g){if(!g.open&&g.vz<-13){damagePlayer(15);toast('Ouch! Hard landing',1)}else toast('🪂 Landed safely',1);shake=Math.max(shake,.6)}
+function startChute28(alt,a,vx,vy,vz,ft){P.jy=0;P.jv=0;P.glide={mode:'chute',alt,vx:vx||0,vy:vy||0,vz:vz||0,t:0,ft:ft==null?.8:ft,a,open:false};P.a=a}
+function dive28(g,a){let x=P.x,y=P.y;for(let k=0;k<12&&inB(g.b,x,y);k++){x+=Math.cos(a)*6;y+=Math.sin(a)*6}P.x=x+Math.cos(a)*4;P.y=y+Math.sin(a)*4;inp.jump=false;
+ startChute28(g.alt,a,Math.cos(a)*50,Math.sin(a)*50,3.4,.85);toast('🪂 Jump! Your parachute opens by itself<br><small>Steer with the joystick</small>',1.8)}
+// bail out of a flying helicopter
+const _tv28=toggleVeh;toggleVeh=function(){const v=P.veh;if(v&&v.type==='heli'&&!P.dead&&((v.alt||0)-(v.roofH||0))>2.5){const wy=groundH(v.x,v.y)+(v.alt||0);
+  v.driver=null;v.drop28=true;P.veh=null;P.x=v.x-Math.sin(v.a)*14;P.y=v.y+Math.cos(v.a)*14;startChute28(wy,v.a,Math.cos(v.a)*v.v*.3,Math.sin(v.a)*v.v*.3,1,.9);hudDirty=true;audioInit();
+  toast('🪂 You jumped out!<br><small>Parachute opens automatically · steer with the joystick</small>',2.2);return}return _tv28.apply(this,arguments)};
+function hand28(){if(!playerMesh||!playerMesh.userData.glb)return null;if(!hand28b||hand28b.__m!==playerMesh){hand28b=null;playerMesh.traverse(x=>{if(!hand28b&&x.isBone&&/righthand$/i.test(x.name.replace(/[:_]/g,'')))hand28b=x});if(hand28b)hand28b.__m=playerMesh}
+ return hand28b?hand28b.getWorldPosition(new THREE.Vector3()):null}
+function webAnchor28(g){return new THREE.Vector3(g.tx*S,groundH(g.tx,g.ty)+g.b.h+.6,g.ty*S)}
+function web28(line){if(!web28m){web28m=new THREE.Mesh(new THREE.CylinderGeometry(.028,.028,1,6,1,true),new THREE.MeshBasicMaterial({color:0xf4f4f4,toneMapped:false}));scene.add(web28m)}
+ const g=P.glide;if(!line||!g||g.mode!=='swing'){web28m.visible=false;return}line.visible=false;
+ const a=hand28()||new THREE.Vector3(P.x*S,g.alt+1.6,P.y*S),b=webAnchor28(g);const k=Math.min(1,g.t/.16);b.lerpVectors(a,b,k);
+ const d=new THREE.Vector3().subVectors(b,a);const L=d.length();if(L<.01){web28m.visible=false;return}web28m.visible=true;web28m.scale.set(1,L,1);web28m.position.copy(a).addScaledVector(d,.5);web28m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize())}
+// arms: right arm reaches for the web anchor; both arms up on the parachute risers
+const _ag28=animGlb;animGlb=function(o,p,aim,dt){_ag28(o,p,aim,dt);if(o!==playerMesh||p.dead)return;const g=P.glide;if(!g)return;try{const B=bones16(o);
+ if(g.mode==='swing'&&B.ra){o.updateMatrixWorld(true);const sh=B.ra.getWorldPosition(new THREE.Vector3());const d=webAnchor28(g).sub(sh).normalize();aim16(B.ra,d,1);aim16(B.rf,d,1)}
+ else if(g.mode==='chute'&&B.ra){const F=new THREE.Vector3(Math.cos(P.a),0,Math.sin(P.a)),R=new THREE.Vector3().crossVectors(F,new THREE.Vector3(0,1,0));const up=new THREE.Vector3(0,1,0);
+  if(g.open){aim16(B.ra,up.clone().addScaledVector(R,.35),1);aim16(B.rf,up,1);aim16(B.la,up.clone().addScaledVector(R,-.35),1);aim16(B.lf,up,1);for(const b of[B.rl,B.ll])aim16(b,up.clone().negate().addScaledVector(F,.15),.7)}
+  else{aim16(B.ra,R.clone().addScaledVector(up,.3),1);aim16(B.rf,R,1);aim16(B.la,R.clone().negate().addScaledVector(up,.3),1);aim16(B.lf,R.clone().negate(),1);for(const b of[B.rl,B.ll])aim16(b,up.clone().negate().addScaledVector(F,-.4),.8)}}}catch(e){}};
+let edge28=0;
+const _up28=updatePlayer;updatePlayer=function(dt,I){const d=Math.min(.1,dt||.016);try{const g=P.glide;
+ if(g&&g.mode==='fall'&&!P.veh&&!P.dead){const gh=groundH(P.x,P.y);if(g.alt-gh>4)startChute28(g.alt,g.a||P.a,0,0,-6,.25)}
+ if(g&&g.mode==='roof'&&!P.dead&&!P.veh&&!INT.active){const In=I||readInput();const mv=In.m>.12,dir=camYaw+Math.atan2(In.x,-In.y);const fa=mv?dir:P.a;
+  let out=false;for(const r of[14,30,48,64])if(!inB(g.b,P.x+Math.cos(fa)*r,P.y+Math.sin(fa)*r)){out=true;break}
+  const pushing=mv&&!inB(g.b,P.x+Math.cos(dir)*10,P.y+Math.sin(dir)*10);edge28=pushing?edge28+d:0;
+  if(inp.jump&&out)dive28(g,fa);else if(edge28>.45){edge28=0;dive28(g,dir)}}
+ for(const v of vehs)if(v.drop28&&!v.driver){v.alt=Math.max(v.roofH||0,(v.alt||0)-4.5*d);if(v.alt<=(v.roofH||0)+.05)v.drop28=false}else if(v.drop28&&v.driver)v.drop28=false}catch(e){console.warn('fx28',e)}
+ const r=_up28.apply(this,arguments);
+ try{const g=P.glide;if(g&&g.mode==='chute'&&g.open&&!P.veh){if(!chute28){chute28=chuteMesh28();scene.add(chute28)}chute28.visible=!INT.active;const s=Math.min(1,.25+(g.ot||0)*2.2);chute28.scale.set(s,s,s);chute28.position.set(P.x*S,g.alt+5.2,P.y*S);chute28.rotation.y=-P.a;chute28.rotation.z=Math.sin(tsec*1.3)*.05}else if(chute28)chute28.visible=false}catch(e){}
+ return r};
 
 const _sg12=startGame;startGame=async function(){const r=await _sg12.apply(this,arguments);try{setTimeout(intro12Start,250)}catch(e){}return r};
 
