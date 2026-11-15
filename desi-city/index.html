@@ -3439,7 +3439,7 @@ const ZSKIN=['#7d8f6a','#8a9a78','#6f7d5f','#94a085'],ZRAG=['#4a4038','#5b4b3c',
 (function(){const st=document.createElement('style');st.textContent=`#bzomb{position:absolute;top:calc(env(safe-area-inset-top) + 130px);right:calc(env(safe-area-inset-right) + 114px);width:68px;height:32px;border-radius:16px;font-size:11px;flex-direction:row;gap:3px}
 #bzomb span{font-size:11px!important;font-weight:800}#bzomb.on{background:rgba(110,20,20,.85)!important;border-color:#ff5a4a!important}
 #zhud{position:fixed;top:calc(env(safe-area-inset-top) + 64px);left:50%;transform:translateX(-50%);z-index:6;pointer-events:none;display:none;background:rgba(40,0,0,.7);color:#fff;font:800 13px system-ui;padding:5px 12px;border-radius:12px;border:1px solid rgba(255,80,60,.6);white-space:nowrap}
-#zvig{position:fixed;inset:0;pointer-events:none;z-index:4;display:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(60,0,0,.38) 100%)}`;document.head.appendChild(st);
+#zvig{position:fixed;inset:0;pointer-events:none;z-index:4;display:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(60,0,0,.22) 100%)}`;document.head.appendChild(st);
  const b=document.createElement('div');b.className='b';b.id='bzomb';b.innerHTML='🧟 <span>Zombies</span>';document.body.appendChild(b);
  const h=document.createElement('div');h.id='zhud';document.body.appendChild(h);const v=document.createElement('div');v.id='zvig';document.body.appendChild(v);
  b.addEventListener('click',()=>zombSet(!ZB.on));})();
@@ -3619,6 +3619,116 @@ const _up26=updatePlayer;updatePlayer=function(dt){dt=Math.min(.1,dt||.016);
    if(P.jy<=floor){P.jy=floor;P.jv=0;if(!floor)P.cj26=false}}
   for(const q of vehs){q.lx26=q.x;q.ly26=q.y}}catch(e){}
  return r};
+// ===== fx27: UFO with a pilot that hunts you, family that always shows up, clean HUD =====
+(function(){const st=document.createElement('style');st.textContent=`
+#bq,#onl,#bzomb,#pchip,#lhint{display:none!important}
+#bmenu27 span{font-size:12px!important;font-weight:800}#bmenu27{position:absolute;top:calc(env(safe-area-inset-top) + 192px);right:calc(env(safe-area-inset-right) + 34px);width:64px;height:30px;border-radius:15px;font-size:12px;font-weight:800;flex-direction:row;gap:4px}
+#chatbar.np27{display:none!important}#mmlabel{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#col27{position:absolute;left:calc(env(safe-area-inset-left) + 62px);top:calc(env(safe-area-inset-top) + 88px);display:flex;flex-direction:column;align-items:flex-start;gap:5px;pointer-events:none;z-index:6}
+#col27>#wanted{position:static!important;font-size:18px;line-height:1}
+#col27>#zhud{position:static!important;transform:none!important;font:800 11px system-ui;padding:3px 9px;border-radius:10px;background:rgba(40,0,0,.6)}
+#st27{display:none;background:rgba(0,0,0,.6);color:#fff;font:800 11px system-ui;padding:3px 9px;border-radius:10px;border:1px solid rgba(255,255,255,.25);white-space:nowrap}
+#st27 i{display:inline-block;height:6px;width:60px;border-radius:3px;background:#333;vertical-align:middle;margin-left:4px;overflow:hidden;font-style:normal}#st27 i b{display:block;height:100%;background:linear-gradient(90deg,#ff5ad1,#7dffb0)}
+.tag27{position:fixed;z-index:5;pointer-events:none;transform:translate(-50%,-100%);font:800 11px system-ui;color:#fff;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.4);padding:2px 7px;border-radius:9px;white-space:nowrap;display:none}
+.tag27.fam{background:rgba(31,138,138,.85)}.tag27.ufo{background:rgba(120,30,160,.85)}
+#menu27{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
+#menu27 .mb{background:rgba(18,22,30,.96);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:14px;width:min(92vw,520px);display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:system-ui}
+#menu27 h3{grid-column:1/-1;margin:0 0 4px;text-align:center;color:#fff;font:900 16px system-ui;letter-spacing:.06em}
+#menu27 button{border:0;border-radius:14px;padding:12px 8px;font:800 14px system-ui;color:#fff;background:#2a3446;text-align:left}
+#menu27 button.x{grid-column:1/-1;text-align:center;background:#444}
+@media (orientation:landscape){
+ #bmenu27{top:calc(env(safe-area-inset-top) + 50px)!important;right:calc(env(safe-area-inset-right) + 114px)!important;width:68px!important;height:32px!important}
+ #bwatch{left:calc(env(safe-area-inset-left) + 10px)!important;top:calc(env(safe-area-inset-top) + 88px)!important}
+ #nav{top:calc(env(safe-area-inset-top) + 50px)!important;left:50%!important;right:auto!important;transform:translateX(-50%);max-width:40%!important;font-size:11px!important;padding:4px 24px 4px 10px!important}
+ #cheat{top:calc(env(safe-area-inset-top) + 80px)!important}
+ #chatbar{top:calc(env(safe-area-inset-top) + 152px)!important;bottom:auto!important}
+ #mmlabel{height:14px}
+ .drive #bfire{bottom:118px!important;width:62px!important;height:62px!important}
+ .drive #bhorn{right:96px!important;bottom:164px!important;width:50px!important;height:50px!important}
+}`;document.head.appendChild(st);
+ const b=document.createElement('div');b.className='b';b.id='bmenu27';b.innerHTML='☰ <span>Menu</span>';document.body.appendChild(b);
+ b.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();audioInit();menu27Open()});
+ const col=document.createElement('div');col.id='col27';document.body.appendChild(col);
+ const s2=document.createElement('div');s2.id='st27';col.appendChild(s2);
+ const m=document.createElement('div');m.id='menu27';m.innerHTML='<div class="mb"><h3>☰ MENU</h3><button data-k="gfx">⚙️ Graphics & settings</button><button data-k="move">✋ Move buttons</button><button data-k="zomb">🧟 Zombie world</button><button data-k="fam">📞 Call Dada & Meera</button><button data-k="onl">🌐 Play online</button><button data-k="map">🗺️ Big map</button><button class="x" data-k="x">Close</button></div>';document.body.appendChild(m);
+ m.addEventListener('pointerdown',e=>{e.stopPropagation()});
+ m.addEventListener('click',e=>{const k=e.target.closest('button')?.dataset.k;if(e.target===m||k==='x'){m.style.display='none';return}if(!k)return;m.style.display='none';
+  try{if(k==='gfx')gfxPanel();else if(k==='move')layout18Edit(true);else if(k==='zomb')zombSet(!ZB.on);else if(k==='fam')famCall(true);else if(k==='onl'){NET.clicked=1;openOnline()}else if(k==='map'){const bm=$('bmap');bm&&(bm.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true})),bm.click())}}catch(err){console.warn('menu27',err)}});
+})();
+function menu27Open(){const m=$('menu27');m.querySelector('[data-k=zomb]').textContent='🧟 Zombie world: '+(ZB.on?'ON':'OFF');
+ m.querySelector('[data-k=fam]').textContent=FAM.on?'🚐 Family on the way':WT.famCd>0?'📞 Family busy ('+Math.ceil(WT.famCd)+'s)':'📞 Call Dada & Meera';m.style.display='flex'}
+function hud27(){const col=$('col27');if(!col)return;for(const id of['wanted','zhud'])if($(id)&&$(id).parentNode!==col)col.insertBefore($(id),col.firstChild);
+ const z=$('zhud');if(z&&z.style.display!=='none'){const t=z.textContent;const n=t.replace(' zombies','').replace(' turning','').replace(' · 🐕 rabid dog!',' · 🐕');if(n!==t)z.textContent=n}
+ const cb=$('chatbar');if(cb){let n=0;try{n=netPeers().length}catch(e){}cb.classList.toggle('np27',n===0)}
+ const ml=$('mmlabel');if(ml&&/Summer|Winter|Monsoon|Spring|Autumn/.test(ml.textContent)){ml.textContent=ml.textContent.split('·').slice(0,2).join('·').trim()}}
+
+// ---- UFO: pilot in the dome, hunts you, can be shot down ----
+const _ufo25=ufoMesh25;ufoMesh25=function(){const g=_ufo25();try{const dome=g.children[1];dome.material.opacity=.42;dome.material.color.set(0xbfefff);
+ const pm=new THREE.MeshStandardMaterial({color:0x8be08b,roughness:.5}),eye=new THREE.MeshStandardMaterial({color:0x050505,roughness:.1,metalness:.4});
+ const pl=new THREE.Group();const body=new THREE.Mesh(new THREE.CylinderGeometry(.45,.7,1.1,14),new THREE.MeshStandardMaterial({color:0x3a2a5a,roughness:.6}));body.position.y=1.1;pl.add(body);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.62,20,16),pm);head.scale.set(1,1.15,1);head.position.y=2.05;pl.add(head);
+ for(const sx of[-1,1]){const e=new THREE.Mesh(new THREE.SphereGeometry(.2,12,10),eye);e.scale.set(1,1.6,.6);e.position.set(sx*.24,2.1,.5);e.rotation.z=sx*.5;pl.add(e)}
+ for(const sx of[-1,1]){const a=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.5,6),pm);a.position.set(sx*.25,2.85,0);a.rotation.z=-sx*.3;pl.add(a);const t=new THREE.Mesh(new THREE.SphereGeometry(.08,8,6),new THREE.MeshBasicMaterial({color:0xff5ad1,toneMapped:false}));t.position.set(sx*.33,3.1,0);pl.add(t)}
+ pl.name='pilot';g.add(pl);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(3.2,.18,8,40),new THREE.MeshBasicMaterial({color:0x7dffb0,toneMapped:false}));ring.rotation.x=Math.PI/2;ring.position.y=-1.1;g.add(ring)}catch(e){}return g};
+const _rs27=raidStart;raidStart=function(){_rs27.apply(this,arguments);if(RD25.on){RD25.hp=RD25.max=100;RD25.shotT=4;RD25.ux=RD25.x;RD25.uy=RD25.y;RD25.uh=null;RD25.orb=rand()*TAU;RD25.angry=0;RD25.famT=6}};
+function ufoPos27(){const u=RD25.ufo;return u?u.position:null}
+function playerH27(){const v=P.veh;return groundH(P.x,P.y)+(v?(v.alt||0)+1:(P.jy||0)+1.2)}
+function beam27(from,to,col){const d=new THREE.Vector3().subVectors(to,from);const L=d.length();const m=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,L,6,1,true),new THREE.MeshBasicMaterial({color:col,toneMapped:false,transparent:true,opacity:.9}));
+ m.position.copy(from).addScaledVector(d,.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());scene.add(m);setTimeout(()=>{scene.remove(m);m.geometry.dispose();m.material.dispose()},160)}
+function ufoHit27(dmg,by){if(!RD25.on||RD25.ph>=2||!RD25.hp)return;RD25.hp=Math.max(0,RD25.hp-dmg);RD25.flash=.12;
+ if(RD25.hp<=0){RD25.ph=3;RD25.vy=0;shake=Math.max(shake,3);toast('💥 <b>UFO shot down!</b><br><small>The pilot is beaming out · +₹1000</small>',2.6);P.money+=1000;hudDirty=true;
+  for(const p of RD25.list)if(!p.dead){p.dead=true;p.deadT=99;p.hidden=true;for(let k=0;k<8;k++)parts.push({x:p.x,y:p.y,vx:rr2(-80,80),vy:rr2(-80,80),life:.4,max:.4,type:'spark'})}}}
+// aim assist: shots go to the UFO when you face it roughly
+const _fire27=fire;fire=function(owner,x,y,a,wk){try{if(RD25.on&&RD25.ph===1&&(owner===P||owner==='player'||(P.veh&&owner===P.veh))){const d=Math.hypot(RD25.ux-P.x,RD25.uy-P.y);const ua=Math.atan2(RD25.uy-P.y,RD25.ux-P.x);let df=Math.abs(((ua-a)%TAU+TAU*1.5)%TAU-Math.PI);
+  if(d<700&&df<.75){const tgt=peds.find(p=>!p.dead&&(p.kind==='alien'||p.zomb)&&Math.hypot(p.x-x,p.y-y)<220&&Math.abs(((Math.atan2(p.y-y,p.x-x)-a)%TAU+TAU*1.5)%TAU-Math.PI)<.3);
+   if(!tgt){const w=WEAP[wk]||{dmg:20,pel:1};ufoHit27(w.dmg*.18*(w.pel||1)*(w.pel>1?.5:1),'player');const u=ufoPos27();if(u){const f=new THREE.Vector3(x*S,playerH27()+.2,y*S);beam27(f,u.clone().add(new THREE.Vector3(rr2(-1,1),0,rr2(-1,1))),0xffe08a)}}}}}catch(e){}
+ return _fire27.apply(this,arguments)};
+function raidFight27(dt){const u=RD25.ufo;if(!u)return;const g0=groundH(RD25.ux,RD25.uy);
+ if(RD25.ph===3){RD25.vy=(RD25.vy||0)-14*dt;u.position.y+=RD25.vy*dt;u.rotation.z+=dt*2;u.rotation.y+=dt*4;if(rand()<.6)parts.push({x:RD25.ux,y:RD25.uy,vx:rr2(-40,40),vy:rr2(-40,40),life:.5,max:.5,type:'spark'});
+  if(u.position.y<=g0+1){try{sfxAt(sfx.boom,RD25.ux,RD25.uy)}catch(e){}for(let i=0;i<40;i++){const a=rand()*TAU,sp=rr2(40,200);parts.push({x:RD25.ux,y:RD25.uy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:.8,max:.8,type:'spark'})}shake=Math.max(shake,6);scene.remove(u);RD25.ufo=null;RD25.on=false;RD25.t=rr2(170,240)}return}
+ if(RD25.ph!==1)return;
+ // fly to a spot near the player and circle
+ RD25.orb+=dt*.35;const R=150;const tx=P.x+Math.cos(RD25.orb)*R,ty=P.y+Math.sin(RD25.orb)*R;const k=1-Math.exp(-dt*.9);RD25.ux+=(tx-RD25.ux)*k;RD25.uy+=(ty-RD25.uy)*k;
+ const th=Math.max(groundH(RD25.ux,RD25.uy)+16,playerH27()+9);RD25.uh=RD25.uh==null?u.position.y:RD25.uh+(th-RD25.uh)*k;
+ u.position.set(RD25.ux*S,RD25.uh+Math.sin(tsec*1.5)*.6,RD25.uy*S);u.rotation.y+=dt*.8;
+ const pl=u.getObjectByName('pilot');if(pl){pl.rotation.y=-u.rotation.y+Math.atan2(P.x-RD25.ux,P.y-RD25.uy)}
+ if(RD25.flash>0){RD25.flash-=dt;u.children[0].material.emissive.set(0xff3030)}else u.children[0].material.emissive.set(0x000000);
+ // shoot
+ RD25.shotT-=dt;const dist=Math.hypot(P.x-RD25.ux,P.y-RD25.uy)*S;
+ if(RD25.shotT<=0&&!P.dead&&!INT.active&&dist<90){RD25.shotT=rr2(2,3);const from=u.position.clone().add(new THREE.Vector3(0,-1.3,0));const miss=rand()<.3;
+  const to=new THREE.Vector3(P.x*S+(miss?rr2(-4,4):0),playerH27()-.3,P.y*S+(miss?rr2(-4,4):0));beam27(from,to,0xff3df0);
+  if(!miss){if(P.veh){P.veh.hp-=P.veh.type==='heli'?30:12;shake=Math.max(shake,2);if(P.veh.hp<=20&&!RD25.warn){RD25.warn=1;toast('⚠️ Your vehicle is badly hit!',1.2)}if(P.veh.hp<=0&&!P.veh.dead)try{explode(P.veh)}catch(e){}}else damagePlayer(12)}}
+}
+const _rt27=raidTick;raidTick=function(dt){const was=RD25.ph;if(!(RD25.on&&RD25.ph===3))_rt27.apply(this,arguments);try{
+ if(!RD25.on&&RD25.t>0&&RD25.t<1e9&&P.veh&&!P.dead&&!INT.active){RD25.t-=dt;if(RD25.t<=0){RD25.t=rr2(150,230);raidStart()}}
+ if(!RD25.on)return;
+ if(RD25.ph===2&&was===1&&RD25.hp>0){/* aliens beaten, UFO flees */}
+ if(RD25.ph===1){if(RD25.ux==null){RD25.ux=RD25.x;RD25.uy=RD25.y}RD25.famT-=dt;if(RD25.famT<=0&&!FAM.on&&!RD25.famUsed){RD25.famUsed=true;famCall(false)}}
+ raidFight27(dt)}catch(e){console.warn('fx27 raid',e)}};
+// original ph0 positions the UFO at RD25.x/y: keep ux in sync before the fight
+// hits from player bullets passing through the UFO
+const _ub27=updateBullets;updateBullets=function(dt){try{if(RD25.on&&RD25.ph===1&&RD25.ux!=null)for(let i=bullets.length-1;i>=0;i--){const b=bullets[i];if(!(b.owner===P||b.owner==='player'||(P.veh&&b.owner===P.veh)))continue;if(Math.hypot(b.x-RD25.ux,b.y-RD25.uy)<56){ufoHit27(b.dmg*.18,'player');bullets.splice(i,1)}}}catch(e){}return _ub27.apply(this,arguments)};
+// Meera zaps the UFO when nothing is on the ground to fight
+const _ally27=allyAI25;allyAI25=function(p,dt){_ally27(p,dt);try{if(p.ally==='meera'&&RD25.on&&RD25.ph===1&&RD25.ufo&&!p.run){p.uz=(p.uz||0)-dt;if(p.uz<=0&&Math.hypot(RD25.ux-p.x,RD25.uy-p.y)<500){p.uz=1;p.a=Math.atan2(RD25.uy-p.y,RD25.ux-p.x);beam27(new THREE.Vector3(p.x*S,groundH(p.x,p.y)+1.5,p.y*S),RD25.ufo.position,0x8a5cff);ufoHit27(4,'ally')}}}catch(e){}};
+// family also comes when zombies corner you
+function famAuto27(){if(FAM.on||P.dead||INT.active||WT.famCd>0)return;if(ZB&&ZB.on&&P.hp<35){let n=0;for(const p of peds)if(!p.dead&&p.zomb&&Math.hypot(p.x-P.x,p.y-P.y)<240)n++;if(n>=2)famCall(false)}}
+
+// ---- name tags + status chip ----
+const TAG27={};function tag27(k,cls,txt){let e=TAG27[k];if(!e){e=document.createElement('div');e.className='tag27 '+cls;document.body.appendChild(e);TAG27[k]=e}if(e.textContent!==txt)e.textContent=txt;return e}
+const _v27=new THREE.Vector3();
+function place27(e,x,y,z){_v27.set(x,y,z).project(camera);if(_v27.z>1||Math.abs(_v27.x)>1.1||Math.abs(_v27.y)>1.1){e.style.display='none';return}e.style.display='block';e.style.left=((_v27.x+1)/2*innerWidth)+'px';e.style.top=((1-_v27.y)/2*innerHeight)+'px'}
+function tags27(){const hide=INT.active||P.dead;
+ const ally=(FAM.allies||[]).filter(a=>!a.dead&&peds.includes(a));
+ for(const k of['dada','meera']){const a=ally.find(q=>q.ally===k);const e=tag27(k,'fam',k==='dada'?'👴 Dada':'👧 Meera');if(!a||hide||!FAM.on){e.style.display='none';continue}place27(e,a.x*S,groundH(a.x,a.y)+2.3,a.y*S)}
+ const ve=tag27('van','fam','🚐 Family');if(FAM.on&&FAM.st==='drive'&&!hide&&FAM.mesh)place27(ve,FAM.x*S,groundH(FAM.x,FAM.y)+3.6,FAM.y*S);else ve.style.display='none';
+ const ue=tag27('ufo','ufo','👽 UFO '+Math.ceil(RD25.hp||0)+'%');if(RD25.on&&RD25.ufo&&RD25.ph===1&&!hide)place27(ue,RD25.ufo.position.x,RD25.ufo.position.y+3,RD25.ufo.position.z);else ue.style.display='none';
+ const s=$('st27');if(!s)return;let h='';
+ if(RD25.on&&RD25.ph<=1){const al=RD25.list.filter(p=>!p.dead&&peds.includes(p)).length;h+='🛸 '+al+' raiders · UFO<i><b style="width:'+Math.round(RD25.hp||0)+'%"></b></i>'}
+ if(FAM.on){const d=Math.round(Math.hypot(FAM.x-P.x,FAM.y-P.y)*S);h+=(h?'<br>':'')+(FAM.st==='drive'?'🚐 Dada & Meera coming · '+d+' m':FAM.st==='park'?'👴👧 Family is helping you':'')}
+ if(hide)h='';if(s.innerHTML!==h)s.innerHTML=h;s.style.display=h?'block':'none'}
+const _up27=updatePlayer;updatePlayer=function(dt){const r=_up27.apply(this,arguments);try{hud27();famAuto27();tags27()}catch(e){console.warn('fx27',e)}return r};
+
 const _sg12=startGame;startGame=async function(){const r=await _sg12.apply(this,arguments);try{setTimeout(intro12Start,250)}catch(e){}return r};
 
 // ===== fx13: Raksha Force heroes in the city, parked helicopters, animals off roads, highways to other states =====
