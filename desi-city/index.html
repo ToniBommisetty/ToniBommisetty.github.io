@@ -1107,7 +1107,7 @@ function render3D(dt){
   skyU.top.value.copy(skyC.nightTop).lerp(skyC.dayTop,dl).lerp(skyC.duskTop,dusk*.5);skyU.bot.value.copy(skyC.nightBot).lerp(skyC.dayBot,dl).lerp(skyC.duskBot,dusk*.8);scene.fog.color.copy(skyU.bot.value);
   const az=.7+(h-12)*.18,se=Math.max(.18,el);skyU.sunDir.value.set(Math.cos(az)*Math.cos(se),Math.sin(se),Math.sin(az)*Math.cos(se)).normalize();
   sun.intensity=.08+2.15*dl;sun.color.setRGB(1,.92-dusk*.25,.82-dusk*.4);hemi.intensity=.2+.7*dl;scene.environmentIntensity=.15+.42*dl;seasonLight(dl);if(ZB.on&&!INT.active)zLight();
-  wallMat.emissiveIntensity=night*.9;glassMat.emissiveIntensity=night*.4;signMat.emissiveIntensity=night*.7;
+  wallMat.emissiveIntensity=night*.6;glassMat.emissiveIntensity=night*.4;signMat.emissiveIntensity=night*.7;
   // --- camera ---
   const now=performance.now();let tx=P.x*S,tz=P.y*S,ty=1.7+(P.veh?vehY(P.veh):Math.max(-1.2,P.wadeY||0)+(P.jy||0)*.6+(P.glide?P.glide.alt:groundH(P.x,P.y))),dist=VW<VH?6.2:5.2,ch=.0;if(P.glide)dist=9;
   if(P.veh){const v=P.veh;if(now-lastLook>1400)camYaw=lerpA(camYaw,v.a,dt*(Math.abs(v.v)>30?3.2:1.2));dist=Math.min(36,Math.max(VW<VH?10:8,v.L*S*(VW<VH?2:1.6)));ty=Math.min(9,1.8+v.L*S*.2)+vehY(v);if(now-lastLook>1400)camPitch+=(.22-camPitch)*Math.min(1,dt*2)}
@@ -3596,6 +3596,29 @@ function allyAI25(p,dt){let tgt=null,td=520;for(const q of peds){if(q.dead||!(q.
 const _uped25=updatePed;updatePed=function(p,dt){if(!p.dead){if(p.kind==='alien'){try{alienAI25(p,dt)}catch(e){}return}if(p.kind==='ally'){try{allyAI25(p,dt)}catch(e){}return}}return _uped25(p,dt)};
 const _kp25=killPed;killPed=function(p,by){const was=p.kind==='alien'&&!p.dead;const r=_kp25.apply(this,arguments);if(was&&p.dead){pickups.push({x:p.x,y:p.y,type:'cash',amt:Math.floor(rr2(60,160))});if(Math.hypot(p.x-P.x,p.y-P.y)<600)toast('👽 Raider down!',.8)}return r};
 const _up25=updatePlayer;updatePlayer=function(dt){const r=_up25.apply(this,arguments);try{const d=Math.min(.1,dt||.016);watchTick(d);watchMesh25();watchGlow25();raidTick(d);famTick(d)}catch(e){console.warn('fx25',e)}return r};
+
+// ===== fx26: stand on top of vehicles (jump onto cars, buses, autos), never walk inside them =====
+const CARH26={car:1.3,taxi:1.3,police:1.4,suv:1.75,auto:1.95,bus:3.2,truck:3.3,tempo:2.3,bike:.95,bullet:.95,scooter:.95,cycle:.9,cart:1.7,heli:2.6};
+function car26Local(v,x,y){const c=Math.cos(v.a),s=Math.sin(v.a),dx=x-v.x,dy=y-v.y;return[dx*c+dy*s,-dx*s+dy*c]}
+function car26Near(pad){let best=null,bd=1e9;for(const v of vehs){if(v.dead&&v.sunk)continue;if(v===P.veh||v.water||(v.alt||0)>1)continue;const d=Math.hypot(v.x-P.x,v.y-P.y);if(d>v.L+40)continue;const[lx,ly]=car26Local(v,P.x,P.y);if(Math.abs(lx)<v.L/2+pad&&Math.abs(ly)<v.W/2+pad&&d<bd){bd=d;best=v}}return best}
+const _up26=updatePlayer;updatePlayer=function(dt){dt=Math.min(.1,dt||.016);
+ if(!P.veh&&!P.dead&&!P.glide&&inp.jump){const base=P.onCar?CARH26[P.onCar.type]||1.3:0;if((P.jy||0)<=base+.02){const v=P.onCar||car26Near(10);if(v){const h=CARH26[v.type]||1.3;P.jv=P.onCar?5:Math.sqrt(2*12*(h+.35));P.jy=(P.jy||0)+.002;P.cj26=true;inp.jump=false}}}
+ const jy0=P.jy||0;const r=_up26.apply(this,arguments);
+ try{if(P.veh||P.dead||P.glide){P.onCar=null;P.cj26=false;return r}
+  let v=P.onCar;if(v&&(v.sunk||!vehs.includes(v))){v=P.onCar=null}
+  if(v&&v.lx26!==undefined){P.x+=v.x-v.lx26;P.y+=v.y-v.ly26}
+  const c=v||car26Near(4);let floor=0,inside=false,h=0;
+  if(c){h=CARH26[c.type]||1.3;const[lx,ly]=car26Local(c,P.x,P.y);inside=Math.abs(lx)<c.L/2&&Math.abs(ly)<c.W/2;
+   if(inside&&((P.jy||0)>=h-.35||P.onCar===c)){floor=h;P.onCar=c;P.cj26=true}
+   else{if(P.onCar===c)P.onCar=null;
+    if(Math.abs(lx)<c.L/2+4&&Math.abs(ly)<c.W/2+4&&(P.jy||0)<h-.35){const px=c.L/2+4-Math.abs(lx),py=c.W/2+4-Math.abs(ly),co=Math.cos(c.a),si=Math.sin(c.a);
+     if(px<py){const sg=Math.sign(lx)||1;P.x+=co*px*sg;P.y+=si*px*sg}else{const sg=Math.sign(ly)||1;P.x+=-si*py*sg;P.y+=co*py*sg}}}}
+  else P.onCar=null;
+  if(P.cj26){// our own vertical motion while climbing onto / standing on / jumping off a vehicle
+   if(Math.abs((P.jy||0)-jy0)<1e-6){P.jv=(P.jv||0)-12*dt;P.jy=(P.jy||0)+P.jv*dt}
+   if(P.jy<=floor){P.jy=floor;P.jv=0;if(!floor)P.cj26=false}}
+  for(const q of vehs){q.lx26=q.x;q.ly26=q.y}}catch(e){}
+ return r};
 const _sg12=startGame;startGame=async function(){const r=await _sg12.apply(this,arguments);try{setTimeout(intro12Start,250)}catch(e){}return r};
 
 // ===== fx13: Raksha Force heroes in the city, parked helicopters, animals off roads, highways to other states =====
@@ -4619,8 +4642,8 @@ function gfxRender(sc,cam){sc=sc||scene;cam=cam||camera;if(GFX.q!==QUAL||GFX.ret
   if(GFX.w!==VW||GFX.h!==VH||GFX.dpr!==DPR){GFX.w=VW;GFX.h=VH;GFX.dpr=DPR;GFX.comp.setPixelRatio(DPR);GFX.comp.setSize(VW,VH);const k=QUAL>=2?1:.5;GFX.bloom.setSize(VW*DPR*k,VH*DPR*k);if(GFX.gtao)GFX.gtao.setSize(Math.round(VW*DPR*.5),Math.round(VH*DPR*.5))}
   GFX.rp.scene=sc;GFX.rp.camera=cam;if(GFX.gtao&&(GFX.gtao.scene!==sc||GFX.gtao.camera!==cam)){GFX.gtao.scene=sc;GFX.gtao.camera=cam;GFX.gtao.setSize(Math.round(VW*DPR*.5),Math.round(VH*DPR*.5))}if(GFX.grade)GFX.grade.uniforms.vig.value=sc===scene?.32:.22;
   // bloom: subtle by day, stronger at night so windows, signs, lamps and neon glow
-  const n=sc===scene?night:.15;renderer.toneMappingExposure=sc===scene?1:.8;GFX.bloom.strength=.18+.62*n;GFX.bloom.threshold=.92-.22*n;GFX.bloom.radius=.4;
-  if(RETRO){GFX.bloom.strength=.22+.6*n;GFX.bloom.threshold=.88-.2*n;GFX.bloom.radius=.6;if(GFX.grade){const u=GFX.grade.uniforms;u.sat.value=1.2;u.con.value=1.06;u.warm.value=.02;u.vig.value=.22;u.pink.value=0}if(GFX.trails)GFX.trails.uniforms.damp.value=P.veh&&Math.abs(P.veh.spd||0)>40?.6:.42}
+  const n=sc===scene?night:.15;renderer.toneMappingExposure=sc===scene?1-.12*n:.8;GFX.bloom.strength=.12+.3*n;GFX.bloom.threshold=.95-.12*n;GFX.bloom.radius=.35;
+  if(RETRO){GFX.bloom.strength=.14+.3*n;GFX.bloom.threshold=.93-.12*n;GFX.bloom.radius=.4;if(GFX.grade){const u=GFX.grade.uniforms;u.sat.value=1.2;u.con.value=1.06;u.warm.value=.02;u.vig.value=.22;u.pink.value=0}if(GFX.trails)GFX.trails.uniforms.damp.value=P.veh&&Math.abs(P.veh.spd||0)>40?.6:.42}
   else if(GFX.grade){const u=GFX.grade.uniforms;u.sat.value=1.12;u.con.value=1.06;u.warm.value=.02;u.pink.value=0}
   GFX.comp.render()}
 
