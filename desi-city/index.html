@@ -3488,7 +3488,7 @@ function zTick(dt){const hud=$('zhud'),vig=$('zvig'),btn=$('bzomb');btn.classLis
  hud.textContent='🧟 '+nz+' zombies'+(ninf?' · 😵 '+ninf+' turning':'')+(dog?' · 🐕 rabid dog!':'')+' · ⏱️ '+mm+':'+String(ss).padStart(2,'0')+' · 💀 '+ZB.kills;
  if(P.dead&&!ZB.deadShown){ZB.deadShown=1;if(ZB.surv>ZB.best){ZB.best=ZB.surv;try{localStorage.setItem('dc_zbest',ZB.best|0)}catch(e){}}toast('🧟 You survived '+mm+'m '+ss+'s · Best '+Math.floor(ZB.best/60)+'m '+Math.floor(ZB.best%60)+'s',3);setTimeout(()=>{ZB.surv=0;ZB.kills=0;ZB.deadShown=0},4000)}}
 const _kp24=killPed;killPed=function(p,by){const was=p.zomb&&!p.dead;const r=_kp24.apply(this,arguments);if(was&&p.dead){ZB.kills++;if(rand()<.25)pickups.push({x:p.x,y:p.y,type:rand()<.5?'cash':'ammo',amt:Math.floor(rr2(40,140))})}return r};
-function zLight(){const g=V24||(V24=new THREE.Color(0x6e7466));scene.fog.color.lerp(g,.65);scene.fog.far*=.55;scene.fog.near*=.4;sun.intensity*=.62;hemi.intensity*=.8;skyU.top.value.lerp(g,.55);skyU.bot.value.lerp(g,.7)}let V24=null;
+function zLight(){const g=V24||(V24=new THREE.Color(0x6e7466));scene.fog.color.lerp(g,.4);scene.fog.far*=.8;scene.fog.near*=.7;sun.intensity*=.62;hemi.intensity*=.8;skyU.top.value.lerp(g,.55);skyU.bot.value.lerp(g,.7)}let V24=null;
 const _up24=updatePlayer;updatePlayer=function(dt){const r=_up24.apply(this,arguments);try{zTick(Math.min(.1,dt||.016))}catch(e){console.warn('z',e)}return r};
 setTimeout(()=>{if(ZB.on&&!ZB.told){ZB.told=1;toast('🧟 <b>ZOMBIE WORLD</b><br><small>A rabid dog is loose… survive! Tap 🧟 to switch off</small>',3.5)}},9000);
 
@@ -4174,7 +4174,7 @@ function seasonLight(dl){const s=SEAS[SEASON.i];const wet=SEASON.rain,sn=SEASON.
   sun.intensity*=s.sun*(1-wet*.35);hemi.intensity*=(1-wet*.3);scene.environmentIntensity*=Math.min(1,s.sun)*(1-wet*.4);
   if(wet>.05||sn>.05){const g=new THREE.Color(.55,.6,.66);scene.fog.color.lerp(g,Math.max(wet,sn*.8)*.7);skyU.top.value.lerp(g,Math.max(wet,sn*.6)*.75);skyU.bot.value.lerp(g,Math.max(wet,sn*.6)*.6)}
   if(SEASON.flash>0){hemi.intensity+=SEASON.flash*3;SEASON.flash=Math.max(0,SEASON.flash-.08)}
-  scene.fog.far=(RETRO?360:380)*(1-.45*Math.max(wet,sn));scene.fog.near=(RETRO?85:90)*(1-.6*Math.max(wet,sn));
+  {const ah=Math.max(0,camera.position.y-groundH(P.x,P.y)-12),fa=Math.min(3.5,1+ah/30);scene.fog.far=(RETRO?360:380)*(1-.45*Math.max(wet,sn))*fa;scene.fog.near=(RETRO?85:90)*(1-.6*Math.max(wet,sn))*fa;}
   if(LEAFM){const want=W.snow?'#e8f0f2':s.leaf;if(LEAFM._seas!==want){LEAFM.color.set(want);LEAFM._seas=want}}
   waterMat.color.set(wet>.3?0x2f6f8f:RETRO?0x1fb3b8:0x1b86c2);seaMat.color.set(wet>.3?0x2f6f8f:RETRO?0x19b4b4:0x1786c4)}
 let rainLines=null,rainPos=null;
