@@ -3409,7 +3409,7 @@ const FADE22={rc:new THREE.Raycaster(),v:new THREE.Vector3(),d:new THREE.Vector3
 function sign22Fade(dt){if(!SIGN22.g||!SIGN22.g.visible||!camera)return;const hy=groundH(P.x,P.y)+1.2+(P.jy||0);const pv=FADE22.v.set(P.x*S,hy,P.y*S);
  const dir=FADE22.d.copy(pv).sub(camera.position);const dist=dir.length();dir.normalize();FADE22.rc.set(camera.position,dir);FADE22.rc.far=dist;
  for(const sg of SIGN22.g.children){const b=sg.children[0];if(!b)continue;let target=1;
-  if(FADE22.rc.intersectObject(b,false).length)target=.18;else{const cd=camera.position.distanceTo(b.position);if(cd<9)target=Math.max(.18,(cd-4)/5)}
+  if(FADE22.rc.intersectObject(b,false).length)target=.18;else{const pd=Math.hypot(b.position.x-pv.x,b.position.z-pv.z),cd=camera.position.distanceTo(b.position);target=Math.min(pd<16?Math.max(.25,(pd-8)/8):1,cd<9?Math.max(.18,(cd-4)/5):1)}
   const cur=sg.userData.op==null?1:sg.userData.op;const op=cur+(target-cur)*Math.min(1,(dt||.016)*8);sg.userData.op=op;
   for(const o of sg.children){o.material.opacity=op;o.material.depthWrite=op>.95}}}
 const _up22b=updatePlayer;updatePlayer=function(dt){const r=_up22b.apply(this,arguments);try{sign22Fade(dt)}catch(e){}return r};
