@@ -1712,10 +1712,11 @@ function updateHeli(v,dt,I){v.alt=v.alt||0;let thr=0,steer=0,down=false;
     v.fireT=(v.fireT||2)-dt;if(!far&&v.fireT<=0&&!P.dead&&Math.hypot(P.x-v.x,P.y-v.y)<520){v.fireT=rr2(1.6,2.6);const a=Math.atan2(P.y-v.y,P.x-v.x)+(rand()-.5)*.2;bullets.push({x:v.x+Math.cos(a)*80,y:v.y+Math.sin(a)*80,vx:Math.cos(a)*700,vy:Math.sin(a)*700,life:.8,owner:v,dmg:3});sfxAt(sfx.shot,v.x,v.y)}
     if(far&&Math.hypot(P.x-v.x,P.y-v.y)>2200)v.remove=true}
   const want=v.driver==='copheli'?32:down?0:(thr>0||v.alt>.3)?Math.max(v.alt,v.alt<40&&thr>0?40:v.alt):0;
-  v.alt+=clamp(want-v.alt,-6*dt,8*dt);if(v.driver==='player'&&!down&&thr===0&&v.alt>.3)v.alt=Math.max(.3,v.alt);
-  const air=v.alt>.6;if(air){v.v+=thr*v.acc*dt;if(!thr)v.v*=Math.pow(.6,dt)}else v.v*=Math.pow(.05,dt);
+  const rb25=heliRoof25(v.x,v.y);const roofH=rb25?rb25.h:0;v.roofB=rb25;v.roofH=roofH;
+  v.alt+=clamp(Math.max(want,roofH)-v.alt,-6*dt,8*dt);if(v.driver==='player'&&!down&&thr===0&&v.alt>roofH+.3)v.alt=Math.max(roofH+.3,v.alt);if(v.alt<roofH)v.alt=roofH;
+  const air=v.alt>roofH+.6;if(air){v.v+=thr*v.acc*dt;if(!thr)v.v*=Math.pow(.6,dt)}else v.v*=Math.pow(.05,dt);
   v.v=clamp(v.v,-v.max*.3,v.max);v.a+=steer*v.turn*dt*(air?1:0);
-  const nx=v.x+Math.cos(v.a)*v.v*dt,ny=v.y+Math.sin(v.a)*v.v*dt;if(v.alt>3||(tileAt(nx,ny)!==BD)){v.x=nx;v.y=ny}else v.v=0;
+  const nx=v.x+Math.cos(v.a)*v.v*dt,ny=v.y+Math.sin(v.a)*v.v*dt;const nb25=heliRoof25(nx,ny);if(nb25?v.alt>=nb25.h-.2:(v.alt>3||tileAt(nx,ny)!==BD)){v.x=nx;v.y=ny}else{v.v=0;if(v===P.veh&&!v.bump25){v.bump25=1;toast('🚁 Fly higher to get over that building',1.2);setTimeout(()=>v.bump25=0,3000)}}
   if(v.driver==='player'&&v.alt>20)missionEvent('heli');}
 
 // ---------- police & wanted level ----------
@@ -2179,7 +2180,7 @@ function openWeapPicker(){giveTools();let el=$('wpick');if(!el){el=document.crea
   el.style.display='flex'}
 // ---- melee: HIT button punches / kicks, or swings the tool in your hand ----
 function meleeTarget(range){let best=null,bd=range;const fx=Math.cos(P.a),fy=Math.sin(P.a);
-  const cand=[];for(const p of peds){if(p.dead||p.kind==='cow'||p.hidden||p.kind==='crew')continue;cand.push(p)}
+  const cand=[];for(const p of peds){if(p.dead||p.kind==='cow'||p.hidden||p.kind==='crew'||p.kind==='ally')continue;cand.push(p)}
   for(const[id,r]of NET.remotes)if(r.h&&r.h.visible)cand.push({x:r.x,y:r.y,peer:id});
   for(const c of cand){const dx=c.x-P.x,dy=c.y-P.y,d=Math.hypot(dx,dy);if(d<bd&&(d<10||(dx*fx+dy*fy)/d>-.2)){bd=d;best=c}}return best}
 function meleeAttack(){if(P.veh||P.dead||INT.active||P.wk2||P.movie)return;if((P.atkCD||0)>0)return;giveTools();
@@ -2321,7 +2322,7 @@ const _fdx=findDoor;findDoor=function(){return _fdx()||fxDoor()};
 // ===================== SUPER POWERS, RESCUES, HERO TEAM, HOUSES, ROOFS, SEA LIFE, OCEAN LINER =====================
 // (original characters and powers — the "Raksha Force" hero team, web-slinging, flight with laser eyes, super speed)
 const FX3={orbs:[],crime:null,crimeT:40,callT:120,call:null,mission:null,sea:[],seaW:null,ship:null,shipW:null,line:null,beam:null,beamT:0,roofCache:null};
-const POWERS={web:{name:'Jaal web-slinger',icon:'🕸️',suit:'#0e6b73',mask:0x0b2e33,trim:0xf5c542},sky:{name:'Surya flight & laser eyes',icon:'☀️',suit:'#f39c12',mask:0x7a2e0b,trim:0xfff1a8,cape:0xb03a2e},speed:{name:'Vayu super speed',icon:'💨',suit:'#cfd8dc',mask:0x263238,trim:0x4fc3f7}};
+const POWERS={web:{name:'Jaal web-slinger',icon:'🕸️',suit:'#0e6b73',mask:0x0b2e33,trim:0xf5c542},sky:{name:'Surya flight & laser eyes',icon:'☀️',suit:'#f39c12',mask:0x7a2e0b,trim:0xfff1a8,cape:0xb03a2e},speed:{name:'Vayu super speed',icon:'💨',suit:'#cfd8dc',mask:0x263238,trim:0x4fc3f7},strength:{name:'Shakti super strength',icon:'💪',suit:'#5b2a86',mask:0x2a1040,trim:0xe0b0ff}};
 // ---------- buildings you can climb / enter ----------
 function roofList(){if(FX3.roofCache&&FX3.roofCache.W===W.t)return FX3.roofCache.list;const L=[];
   for(const b of W.blds||[]){const k=b.kind;let h=0;if(k==='house'||k==='shop')h=b.floors*3.2+.5;else if(k==='tower'||k==='office')h=b.floors*3.2;else if(k==='mall')h=16;else if(k==='hospital')h=19.2;if(!h)continue;
@@ -2341,7 +2342,7 @@ function orbsTick(dt){if(!W||!W.t||INT.active)return;FX3.orbs=FX3.orbs.filter(o=
       const s=new THREE.Sprite(new THREE.SpriteMaterial({map:orbTex(POWERS[k].icon,k==='web'?'#19c3d1':k==='sky'?'#ffb300':'#90caf9'),depthWrite:false,transparent:true}));s.scale.set(2.2,2.2,1);scene.add(s);FX3.orbs.push({k,x,y,s,W:W.t});break}}
   for(const o of FX3.orbs){o.s.position.set(o.x*S,groundH(o.x,o.y)+1.6+Math.sin(tsec*2.5+o.x)*.25,o.y*S);if(!P.veh&&Math.hypot(o.x-P.x,o.y-P.y)<20){givePower(o.k);o.x=-1e9}}}
 function givePower(k){if(P.glide&&P.glide.mode==='fly')P.glide=null;P.power=k;P.powerT=180;hudDirty=true;sfx.cash&&sfx.cash();
-  const help={web:'Tap 🕸️ WEB to swing onto the building you are facing. Swing roof to roof!',sky:'Tap ✈️ FLY to take off (tap again to fly higher or land). Tap 🔴 LASER to hit bad guys. Fly low over people in danger to carry them to safety.',speed:'You now run super fast and hit twice as hard.'}[k];
+  const help={web:'Tap 🕸️ WEB to swing onto the building you are facing. Swing roof to roof!',sky:'Tap ✈️ FLY to take off (tap again to fly higher or land). Tap 🔴 LASER to hit bad guys. Fly low over people in danger to carry them to safety.',speed:'You now run super fast and hit twice as hard.',strength:'Your punches send enemies flying. Tap HIT!'}[k];
   toast(POWERS[k].icon+' <b>'+POWERS[k].name+'</b> power for 3 minutes!<br><small>'+help+'</small>',3.4)}
 function powerTick(dt){if(!P.power)return;P.powerT-=dt;if(P.powerT<=0){const was=P.power;P.power=null;hudDirty=true;if(P.glide&&(P.glide.mode==='fly'||P.glide.mode==='swing')){P.glide={mode:'fall',alt:P.glide.alt,a:P.a}}toast(POWERS[was].icon+' Power faded',1.4)}}
 // ---------- suit extras: mask, chest emblem, cape ----------
@@ -2525,7 +2526,7 @@ function doorIcons(){if(!FX3.doors)return;if(!FX3.icons){FX3.icons=[];const th=c
   const L=FX3.doors.map(d=>[Math.hypot(d.ox-P.x,d.oy-P.y),d]).filter(q=>q[0]<420).sort((a,b)=>a[0]-b[0]).slice(0,10);
   FX3.icons.forEach((s,i)=>{const q=L[i];if(!q||INT.active||P.glide){s.visible=false;return}const d=q[1];s.visible=true;s.material.map=FX3.iconTex[d.b.home?0:1];const nx=(d.ox-d.x)/14,ny=(d.oy-d.y)/14;s.position.set((d.x+nx*1.2)*S,groundH(d.x,d.y)+3+Math.sin(tsec*2+i)*.12,(d.y+ny*1.2)*S)})}
 // light pillars over power orbs so you can spot them from far away, plus minimap icons and a "nearest power" chip
-function orbBeams(){for(const o of FX3.orbs){if(o.x<-1e8){if(o.beam)o.beam.visible=false;continue}if(!o.beam){const c=o.k==='web'?0x19c3d1:o.k==='sky'?0xffb300:0x90caf9;o.beam=new THREE.Mesh(new THREE.CylinderGeometry(.35,.6,60,10,1,true),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.28,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,toneMapped:false}));scene.add(o.beam)}
+function orbBeams(){for(const o of FX3.orbs){if(o.beam)o.beam.visible=false;continue;if(o.x<-1e8){if(o.beam)o.beam.visible=false;continue}if(!o.beam){const c=o.k==='web'?0x19c3d1:o.k==='sky'?0xffb300:0x90caf9;o.beam=new THREE.Mesh(new THREE.CylinderGeometry(.35,.6,60,10,1,true),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.28,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,toneMapped:false}));scene.add(o.beam)}
     o.beam.position.set(o.x*S,groundH(o.x,o.y)+30,o.y*S);o.beam.visible=!INT.active}}
 function powerChip(){let el=$('pchip');if(!el){el=document.createElement('div');el.id='pchip';el.style.cssText='position:absolute;left:calc(env(safe-area-inset-left) + 10px);top:calc(env(safe-area-inset-top) + 140px);font:800 12px system-ui;color:#fff;background:rgba(0,0,0,.5);padding:5px 10px;border-radius:12px;z-index:6;pointer-events:none';document.body.appendChild(el)}
   let best=null,bd=1e9;for(const o of FX3.orbs){if(o.x<-1e8)continue;const d=Math.hypot(o.x-P.x,o.y-P.y);if(d<bd){bd=d;best=o}}
@@ -2541,7 +2542,7 @@ function fx3Tick(dt){try{powerTick(dt);syncSuit();if(!INT.active&&!P.glide&&!P.v
   const g=P.glide;if(g&&g.mode==='swing'&&playerMesh){if(!FX3.line){FX3.line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:0xf2f2f2}));scene.add(FX3.line)}const p=FX3.line.geometry.attributes.position;p.setXYZ(0,P.x*S,g.alt+1.9,P.y*S);p.setXYZ(1,g.tx*S,groundH(g.tx,g.ty)+g.b.h+9,g.ty*S);p.needsUpdate=true;FX3.line.visible=true}else if(FX3.line)FX3.line.visible=false;
   if(P._suit){const c=P._suit.getObjectByName('cape');if(c)c.rotation.z=(g&&g.mode==='fly'?1.25:.12)+Math.sin(tsec*7)*.06}
   if(INT.active&&INT.fan)INT.fan.rotation.y+=dt*6;if(INT.active&&INT.tv){INT.tv.material.emissiveIntensity=.6+Math.sin(tsec*9)*.25+Math.sin(tsec*3.1)*.2}if(INT.active&&INT.heroPose&&P.moving)INT.heroPose=null;
-  const b1=$('bpow1'),b2=$('bpow2'),pt=$('ptimer');if(b1){const pw=P.power,sh1=!!pw&&pw!=='speed'&&!P.veh&&!P.dead&&!INT.active;b1.style.display=sh1?'flex':'none';if(sh1)b1.innerHTML=pw==='web'?'<span>🕸️</span>WEB':(g&&g.mode==='fly'?(g.tgt<9?'<span>⬆️</span>HIGHER':g.tgt<50&&g.tgt>0?'<span>⬆️</span>HIGHER':'<span>🛬</span>LAND'):'<span>✈️</span>FLY');
+  const b1=$('bpow1'),b2=$('bpow2'),pt=$('ptimer');if(b1){const pw=P.power,sh1=!!pw&&pw!=='speed'&&pw!=='strength'&&!P.veh&&!P.dead&&!INT.active;b1.style.display=sh1?'flex':'none';if(sh1)b1.innerHTML=pw==='web'?'<span>🕸️</span>WEB':(g&&g.mode==='fly'?(g.tgt<9?'<span>⬆️</span>HIGHER':g.tgt<50&&g.tgt>0?'<span>⬆️</span>HIGHER':'<span>🛬</span>LAND'):'<span>✈️</span>FLY');
     b2.style.display=pw==='sky'&&!P.veh&&!P.dead&&!INT.active?'flex':'none';pt.style.display=pw?'block':'none';if(pw)pt.textContent=POWERS[pw].icon+' '+Math.ceil(P.powerT)+'s'}
   if(P.power==='speed'&&P.run&&P.moving&&!P.glide&&rand()<.6)parts.push({x:P.x+rr2(-4,4),y:P.y+rr2(-4,4),vx:0,vy:0,life:.35,max:.35,type:'spark'})}catch(e){console.warn('fx3',e)}}
 function fx3Init(){if(window.__fx3i)return;window.__fx3i=1;showAlert('',0,0,'');$('alert').style.display='none';
@@ -3190,7 +3191,7 @@ function intro12Cam(dt){const I=INTRO12;I.t+=dt;const t=I.t,cx=I.cx,cz=I.cz,a=I.
 const SUIT16={
  sky:{suit:'#1f4fbf',cape:'#b3122e',belt:'#e0b23a',em:'sun'},
  speed:{suit:'#d9dee3',cape:null,belt:'#4fc3f7',em:'wind'},
- web:{suit:'#0e6b73',cape:null,belt:'#f5c542',em:'web'}};
+ web:{suit:'#0e6b73',cape:null,belt:'#f5c542',em:'web'},strength:{suit:'#5b2a86',cape:'#2a1040',belt:'#e0b0ff',em:'wind'}};
 function emblem16(kind){const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');g.translate(128,128);
  if(kind==='sun'){g.fillStyle='#b3122e';g.beginPath();g.arc(0,0,120,0,7);g.fill();g.strokeStyle='#ffd34d';g.lineWidth=10;g.beginPath();g.arc(0,0,112,0,7);g.stroke();g.fillStyle='#ffd34d';g.beginPath();g.arc(0,0,42,0,7);g.fill();
   for(let i=0;i<12;i++){g.save();g.rotate(i*Math.PI/6);g.beginPath();g.moveTo(-12,-52);g.lineTo(0,-96);g.lineTo(12,-52);g.fill();g.restore()}}
@@ -3490,6 +3491,111 @@ const _kp24=killPed;killPed=function(p,by){const was=p.zomb&&!p.dead;const r=_kp
 function zLight(){const g=V24||(V24=new THREE.Color(0x6e7466));scene.fog.color.lerp(g,.65);scene.fog.far*=.55;scene.fog.near*=.4;sun.intensity*=.62;hemi.intensity*=.8;skyU.top.value.lerp(g,.55);skyU.bot.value.lerp(g,.7)}let V24=null;
 const _up24=updatePlayer;updatePlayer=function(dt){const r=_up24.apply(this,arguments);try{zTick(Math.min(.1,dt||.016))}catch(e){console.warn('z',e)}return r};
 setTimeout(()=>{if(ZB.on&&!ZB.told){ZB.told=1;toast('🧟 <b>ZOMBIE WORLD</b><br><small>A rabid dog is loose… survive! Tap 🧟 to switch off</small>',3.5)}},9000);
+
+// ===== fx25: power watch, space raiders who want it, and family (Dada + cousin Meera) in their camper van =====
+function heliRoof25(x,y){try{for(const b of roofList()){if(Math.abs(b.cx-x)>220||Math.abs(b.cy-y)>220)continue;if(inB(b,x,y))return b}}catch(e){}return null}
+const WT={ready:true,cd:0,use:0,cur:null,fam:0,famCd:0};
+const WPOW=[['web','🕸️','Jaal','Web-slinger: swing between buildings'],['sky','☀️','Surya','Fly and fire laser eyes'],['speed','💨','Vayu','Super speed, hit twice as hard'],['strength','💪','Shakti','Super strength, send enemies flying']];
+(function(){const st=document.createElement('style');st.textContent=`
+#bwatch{position:absolute;left:calc(env(safe-area-inset-left) + 205px);top:calc(env(safe-area-inset-top) + 54px);width:44px;height:44px;border-radius:50%;font-size:22px;background:radial-gradient(circle at 50% 45%,#1e3a2a,#0b1410);border:3px solid #33e07a;box-shadow:0 0 12px rgba(51,224,122,.6)}
+#bwatch.cd{border-color:#e05a33;box-shadow:0 0 10px rgba(224,90,51,.6)}#bwatch small{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font:800 10px system-ui;color:#fff;text-shadow:0 1px 3px #000;white-space:nowrap}
+#wpanel{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
+#wpanel .wb{background:linear-gradient(160deg,#10231a,#071009);border:2px solid #33e07a;border-radius:22px;padding:14px;max-width:560px;width:92vw;color:#fff;font-family:system-ui;box-shadow:0 0 30px rgba(51,224,122,.35)}
+#wpanel h3{margin:0 0 10px;font:900 17px system-ui;color:#7dffb0;text-align:center;letter-spacing:.08em}
+#wpanel .wg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+#wpanel .wc{background:rgba(51,224,122,.1);border:1px solid rgba(51,224,122,.5);border-radius:14px;padding:8px 6px;text-align:center;cursor:pointer}
+#wpanel .wc b{display:block;font-size:30px}#wpanel .wc i{display:block;font:900 13px system-ui;font-style:normal}#wpanel .wc span{display:block;font:600 10px system-ui;opacity:.8;margin-top:2px}
+#wpanel .wc.on{background:rgba(51,224,122,.35);border-color:#7dffb0}
+#wpanel .wr{display:flex;gap:8px;margin-top:10px}#wpanel .wr button{flex:1;border:0;border-radius:12px;padding:10px;font:800 13px system-ui;color:#fff;background:#2b5d3f}#wpanel .wr button.x{background:#444}#wpanel .wr button.fam{background:#b5651d}
+#wpanel .wmsg{text-align:center;font:700 12px system-ui;margin-top:8px;color:#ffcf7a}`;document.head.appendChild(st);
+ const b=document.createElement('div');b.className='b';b.id='bwatch';b.innerHTML='⌚<small>WATCH</small>';document.body.appendChild(b);b.addEventListener('click',()=>{audioInit();watchOpen()});
+ const p=document.createElement('div');p.id='wpanel';p.innerHTML='<div class="wb"><h3>⌚ POWER WATCH</h3><div class="wg"></div><div class="wmsg"></div><div class="wr"><button class="fam">📞 Call Dada & Meera</button><button class="off">↩ Normal form</button><button class="x">Close</button></div></div>';document.body.appendChild(p);
+ p.addEventListener('click',e=>{if(e.target===p)p.style.display='none'});p.querySelector('.x').onclick=()=>p.style.display='none';
+ p.querySelector('.off').onclick=()=>{if(P.power){P.power=null;P.powerT=0;hudDirty=true;if(P.glide&&(P.glide.mode==='fly'||P.glide.mode==='swing'))P.glide={mode:'fall',alt:P.glide.alt,a:P.a};WT.ready=false;WT.cd=20;toast('⌚ Back to normal · watch recharging',1.4)}p.style.display='none'};
+ p.querySelector('.fam').onclick=()=>{p.style.display='none';famCall(true)};})();
+function watchOpen(){const p=$('wpanel');const g=p.querySelector('.wg');g.innerHTML='';for(const[k,ic,nm,ds]of WPOW){const c=document.createElement('div');c.className='wc'+(P.power===k?' on':'');c.innerHTML=`<b>${ic}</b><i>${nm}</i><span>${ds}</span>`;
+  c.onclick=()=>{if(P.dead||P.veh){toast('Get out of the vehicle first',1.2);return}if(!WT.ready&&P.power!==k){toast('⌚ Watch is recharging… '+Math.ceil(WT.cd)+'s',1.2);return}p.style.display='none';watchTransform(k)};g.appendChild(c)}
+ p.querySelector('.wmsg').textContent=WT.ready?(P.power?'Tap another power to switch':'Choose a power to transform'):'Recharging… '+Math.ceil(WT.cd)+'s';
+ p.querySelector('.fam').textContent=WT.famCd>0?'📞 Family busy ('+Math.ceil(WT.famCd)+'s)':'📞 Call Dada & Meera';p.style.display='flex'}
+function watchTransform(k){givePower(k);P.powerT=90;WT.ready=false;WT.cd=0;WT.cur=k;const f=$('i12flash');if(f){f.style.opacity=.8;setTimeout(()=>f.style.opacity=0,140)}shake=Math.max(shake,1.5);
+ for(let i=0;i<20;i++){const a=i/20*TAU;parts.push({x:P.x,y:P.y,vx:Math.cos(a)*120,vy:Math.sin(a)*120,life:.5,max:.5,type:'spark'})}}
+function watchTick(dt){const b=$('bwatch');if(!b)return;b.style.display=INT.active||P.dead?'none':'flex';
+ if(WT.cur&&!P.power){WT.cur=null;WT.cd=30;WT.ready=false}
+ if(!WT.ready&&!P.power){WT.cd-=dt;if(WT.cd<=0){WT.ready=true;toast('⌚ Watch recharged!',1)}}
+ if(WT.famCd>0)WT.famCd-=dt;
+ b.classList.toggle('cd',!WT.ready&&!P.power);b.querySelector('small').textContent=P.power?Math.ceil(P.powerT)+'s':WT.ready?'WATCH':Math.ceil(WT.cd)+'s'}
+// watch on the 3D hero's left wrist
+function watchMesh25(){if(!playerMesh||!playerMesh.userData.glb||playerMesh.userData.w25)return;let hand=null;playerMesh.traverse(x=>{if(!hand&&x.isBone&&/lefthand$/i.test(x.name.replace(/[:_]/g,'')))hand=x});if(!hand)return;
+ const g=new THREE.Group();const sc=1/(hand.getWorldScale(new THREE.Vector3()).x||1);
+ const band=new THREE.Mesh(new THREE.TorusGeometry(.045,.012,8,20),new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:.6}));band.rotation.x=Math.PI/2;g.add(band);
+ const face=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.018,20),new THREE.MeshStandardMaterial({color:0x111111,metalness:.6,roughness:.3}));face.position.set(0,0,.05);face.rotation.x=Math.PI/2;g.add(face);
+ const glow=new THREE.Mesh(new THREE.CircleGeometry(.022,20),new THREE.MeshBasicMaterial({color:0x33e07a,toneMapped:false}));glow.position.set(0,0,.06);g.add(glow);
+ g.scale.setScalar(sc);g.position.set(0,-.06*sc,0);hand.add(g);playerMesh.userData.w25=glow}
+function watchGlow25(){const gl=playerMesh&&playerMesh.userData.w25;if(!gl)return;gl.material.color.set(P.power?0x7dffb0:WT.ready?0x33e07a:0xe05a33);gl.scale.setScalar(P.power?1+Math.sin(tsec*8)*.15:1)}
+// Shakti: punches fling enemies
+const _ma25=meleeAttack;meleeAttack=function(){const before=P.atkT||0;_ma25.apply(this,arguments);if(P.power==='strength'&&P.atkT>before){const t=meleeTarget(30);if(t&&!t.dead&&!t.thrown16&&t.kind!=='cow'&&!t.peer){t.hp-=40;t.thrown16={t:.3,x0:t.x,y0:t.y,x1:t.x+Math.cos(P.a)*150,y1:t.y+Math.sin(P.a)*150,a:P.a};shake=Math.max(shake,1.2)}}};
+
+// ---- space raiders ----
+const RD25={t:110,on:false,ufo:null,list:[],famUsed:false,calm:0};
+function ufoMesh25(){const g=new THREE.Group();const m=new THREE.MeshStandardMaterial({color:0x8a94a6,metalness:.9,roughness:.25});
+ const disc=new THREE.Mesh(new THREE.SphereGeometry(6,32,12),m);disc.scale.set(1,.22,1);g.add(disc);
+ const dome=new THREE.Mesh(new THREE.SphereGeometry(2.4,24,12,0,TAU,0,Math.PI/2),new THREE.MeshStandardMaterial({color:0x7dd3fc,metalness:.3,roughness:.05,transparent:true,opacity:.75}));dome.position.y=.9;g.add(dome);
+ for(let i=0;i<10;i++){const a=i/10*TAU;const l=new THREE.Mesh(new THREE.SphereGeometry(.28,8,6),new THREE.MeshBasicMaterial({color:i%2?0x7dffb0:0xff5ad1,toneMapped:false}));l.position.set(Math.cos(a)*5.5,0,Math.sin(a)*5.5);g.add(l)}
+ const beam=new THREE.Mesh(new THREE.CylinderGeometry(1.6,4,1,20,1,true),new THREE.MeshBasicMaterial({color:0x7dffb0,transparent:true,opacity:.25,side:THREE.DoubleSide,depthWrite:false,toneMapped:false}));beam.name='beam';g.add(beam);return g}
+function raidStart(){const s=zSpot(140,260);if(!s)return;RD25.on=true;RD25.list=[];RD25.famUsed=false;RD25.calm=0;RD25.x=s[0];RD25.y=s[1];RD25.ph=0;RD25.t=0;
+ RD25.ufo=ufoMesh25();scene.add(RD25.ufo);toast('🛸 <b>Space raiders!</b><br><small>They came from space to take your ⌚ watch. Fight them!</small>',3);shake=Math.max(shake,1)}
+function raidSpawnAlien(){const a=rand()*TAU,r=rr2(10,30);const x=RD25.x+Math.cos(a)*r,y=RD25.y+Math.sin(a)*r;if(!circleFree(x,y,5))return;
+ const p=makePed(x,y,{kind:'alien',preset:'m_musc',skin:'#7b5cc4',shirt:'#2b2d42',pants:'#2b2d42',sleeves:1,boots:'#111',helm:'#9fe8ff',hair:'#111',beard:false,mous:false,hp:90,spd:30,state:'alien',hostile:true});peds.push(p);RD25.list.push(p)}
+function alienAI25(p,dt){const dP=Math.hypot(P.x-p.x,P.y-p.y);let tgt=null,td=dP;for(const q of peds)if(q.kind==='ally'&&!q.dead){const d=Math.hypot(q.x-p.x,q.y-p.y);if(d<td){td=d;tgt=q}}
+ const tx=tgt?tgt.x:P.x,ty=tgt?tgt.y:P.y;p.hitT=(p.hitT||0)-dt;p.shotT=(p.shotT||rr2(1,3))-dt;
+ if(td>12&&!(P.dead&&!tgt))zMove(p,tx,ty,p.spd,dt);else{p.moving=false;p.a=Math.atan2(ty-p.y,tx-p.x);if(p.hitT<=0){p.hitT=.9;p.pose='punch';p.atkP=.6;setTimeout(()=>{p.pose=null},250);if(tgt)tgt.hp-=8;else if(!P.dead){damagePlayer(12);toast('👽 Raider hit you!',.6)}}}
+ if(td>40&&td<260&&p.shotT<=0){p.shotT=rr2(1.8,3.2);const a=Math.atan2(ty-p.y,tx-p.x)+(rand()-.5)*.12;bullets.push({x:p.x+Math.cos(a)*10,y:p.y+Math.sin(a)*10,vx:Math.cos(a)*520,vy:Math.sin(a)*520,life:.7,owner:p,dmg:4});try{laserFx13(p,{x:p.x+Math.cos(a)*td,y:p.y+Math.sin(a)*td},0x7dffb0)}catch(e){}}}
+function raidTick(dt){if(INT.active||!W)return;
+ if(!RD25.on){RD25.t-=dt;if(RD25.t<=0&&!P.dead&&!P.veh){RD25.t=rr2(150,230);raidStart()}return}
+ RD25.t+=dt;const u=RD25.ufo,g=groundH(RD25.x,RD25.y);
+ const desc=Math.min(1,RD25.t/4);u.position.set(RD25.x*S,g+90-60*desc+Math.sin(tsec*1.5)*.6,RD25.y*S);u.rotation.y+=dt*.8;const bm=u.getObjectByName('beam');
+ if(RD25.ph===0){bm.visible=desc>=1;if(desc>=1){bm.scale.y=u.position.y-g;bm.position.y=-(u.position.y-g)/2;RD25.drop=(RD25.drop||0)-dt;if(RD25.drop<=0&&RD25.list.length<(3+Math.min(3,Math.floor((ZB&&ZB.surv||0)/120)))){RD25.drop=.8;raidSpawnAlien()}if(RD25.list.length>=3&&RD25.t>9)RD25.ph=1}}
+ else if(RD25.ph===1){bm.visible=false;const alive=RD25.list.filter(p=>!p.dead&&peds.includes(p));
+  if(!RD25.famUsed&&(P.hp<45||alive.length>=3&&RD25.t>18)){RD25.famUsed=true;famCall(false)}
+  if(!alive.length){RD25.calm+=dt;if(RD25.calm>1.5){RD25.ph=2;P.money+=600;hudDirty=true;toast('🏆 You beat the space raiders!<br><small>⌚ The watch is safe · +₹600</small>',2.6)}}}
+ else{u.position.y+=dt*30;if(u.position.y>g+160){scene.remove(u);RD25.on=false;RD25.ufo=null}}}
+
+// ---- family: Dada and cousin Meera in their camper van ----
+const FAM={on:false};
+function vanMesh25(){const B=new MB7();const L=6.4,Wd=2.4;const cream=new THREE.MeshStandardMaterial({color:0xefe6d2,roughness:.5,metalness:.1}),stripe=new THREE.MeshStandardMaterial({color:0x1f8a8a,roughness:.5}),stripe2=new THREE.MeshStandardMaterial({color:0xe2a23b,roughness:.5});
+ for(const x of[1.9,-1.9])for(const z of[1,-1])B.wheel(x,.45,z*(Wd/2-.12),.45,.3);
+ B.box(cream,0,1.65,0,L,2.3,Wd,.35);B.box(cream,L/2-.55,1.15,0,1.1,1.3,Wd*.98,.3);
+ B.box(M7.glass,L/2+.0,1.95,0,.05,.95,Wd*.86,.08,0,0,.25);for(const z of[1,-1]){B.box(M7.glass,L/2-.6,2.0,z*(Wd/2+.005),.8,.7,.02,.04);for(let k=0;k<3;k++)B.box(M7.glass,.9-k*1.5,2.15,z*(Wd/2+.005),1.0,.6,.02,.04)}
+ for(const z of[1,-1]){B.box(stripe,0,1.35,z*(Wd/2+.01),L-.2,.14,.02);B.box(stripe2,0,1.18,z*(Wd/2+.01),L-.2,.09,.02)}
+ B.box(M7.dark,-.6,1.2,Wd/2+.01,.75,1.7,.03,.03);B.box(M7.chrome,L/2+.05,.65,0,.1,.22,Wd,.05);B.box(M7.chrome,-L/2-.05,.65,0,.1,.22,Wd,.05);
+ for(const z of[.8,-.8]){B.cylX(M7.hl,L/2+.07,.95,z,.16,.04);B.box(M7.tl,-L/2-.02,1.0,z,.03,.25,.2,.02)}
+ B.box(new THREE.MeshStandardMaterial({color:0xd8d8d8,roughness:.6}),-.8,2.95,0,1.1,.35,1.0,.08);for(let k=0;k<6;k++)B.box(M7.chrome,-L/2-.06,.9+k*.32,.6,.04,.04,.4);
+ const g=B.build();g.traverse(o=>{if(o.isMesh)o.castShadow=true});return g}
+function famCall(manual){if(FAM.on){if(manual)toast('🚐 Dada and Meera are already on the way!',1.2);return}if(WT.famCd>0&&manual){toast('📞 Family is busy, try in '+Math.ceil(WT.famCd)+'s',1.2);return}if(!W||!W.real||INT.active)return;
+ const N=navBuild();if(!N)return;const[pe,pn]=px2m(P.x,P.y);let si=-1;for(let k=0;k<400;k++){const i=Math.floor(rand()*N.X.length);const d=Math.hypot(N.X[i]-pe,N.Y[i]-pn);if(d>110&&d<220){si=i;break}}if(si<0)return;
+ const path=navRoute(N.X[si],N.Y[si],pe,pn).map(([e,n])=>m2px(e,n));if(path.length<2)return;
+ FAM.on=true;FAM.path=path;FAM.i=0;FAM.x=path[0][0];FAM.y=path[0][1];FAM.a=0;FAM.st='drive';FAM.t=0;FAM.mesh=vanMesh25();scene.add(FAM.mesh);WT.famCd=120;
+ toast('📞 '+(manual?'You called home.':'You are in trouble!')+'<br><small>🚐 Dada and cousin Meera are coming in the camper van!</small>',2.6)}
+function famTick(dt){if(!FAM.on)return;FAM.t+=dt;const m=FAM.mesh;
+ if(FAM.st==='drive'||FAM.st==='leave'){const sp=110;let rem=sp*dt;while(rem>0&&FAM.i<FAM.path.length-1){const[nx,ny]=FAM.path[FAM.i+1];const dx=nx-FAM.x,dy=ny-FAM.y,d=Math.hypot(dx,dy);if(d<=rem){FAM.x=nx;FAM.y=ny;FAM.i++;rem-=d}else{FAM.x+=dx/d*rem;FAM.y+=dy/d*rem;rem=0}FAM.a=Math.atan2(dy,dx)}
+  const dP=Math.hypot(P.x-FAM.x,P.y-FAM.y);if(FAM.st==='drive'&&(dP<70||FAM.i>=FAM.path.length-1)){FAM.st='park';famOut()}
+  if(FAM.st==='leave'&&(FAM.i>=FAM.path.length-1||FAM.t>25)){scene.remove(m);FAM.on=false}}
+ else if(FAM.st==='park'){const foes=peds.some(p=>!p.dead&&(p.kind==='alien'||p.zomb||p.kind==='thug')&&Math.hypot(p.x-FAM.x,p.y-FAM.y)<500);if(!foes)FAM.calm=(FAM.calm||0)+dt;else FAM.calm=0;
+  if(FAM.calm>8||FAM.t>75){for(const a of FAM.allies)a.dead=true,a.deadT=99,a.hidden=true;toast('🚐 Dada: "Stay safe, beta! Call us any time." 👋',2.2);
+   const[pe,pn]=px2m(FAM.x,FAM.y);const N=navBuild();let gi=0;for(let k=0;k<300;k++){const i=Math.floor(rand()*N.X.length);if(Math.hypot(N.X[i]-pe,N.Y[i]-pn)>300){gi=i;break}}FAM.path=navRoute(pe,pn,N.X[gi],N.Y[gi]).map(([e,n])=>m2px(e,n));FAM.i=0;FAM.st='leave';FAM.t=0}}
+ m.position.set(FAM.x*S,groundH(FAM.x,FAM.y),FAM.y*S);m.rotation.y=-FAM.a;m.visible=!INT.active}
+function famOut(){FAM.allies=[];FAM.t=0;FAM.calm=0;const sx=FAM.x-Math.sin(FAM.a)*22,sy=FAM.y+Math.cos(FAM.a)*22;
+ const dada=makePed(sx,sy,{kind:'ally',ally:'dada',preset:'m_old',shirt:'#e9e4d8',kurta:true,pants:'#8a6d4a',hair:'#d9d9d9',beard:true,mous:true,shades:false,hp:9999,spd:24});
+ const meera=makePed(sx+8,sy+6,{kind:'ally',ally:'meera',fem:true,saree:null,shirt:'#1f8a8a',jacket:'#1d1d1f',pants:'#2f4b7c',hair:'#2a1a12',boots:'#2a2a2a',hp:9999,spd:34});
+ peds.push(dada,meera);FAM.allies=[dada,meera];P.hp=Math.min(100,P.hp+40);P.hpLoss=0;hudDirty=true;toast('🚐 Dada and Meera jumped out to help!<br><small>❤️ +40 health</small>',2.4)}
+function allyAI25(p,dt){let tgt=null,td=520;for(const q of peds){if(q.dead||!(q.kind==='alien'||q.zomb||q.kind==='thug'||q.kind==='thief'))continue;const d=Math.hypot(q.x-p.x,q.y-p.y);if(d<td){td=d;tgt=q}}
+ p.hitT=(p.hitT||0)-dt;const meera=p.ally==='meera';
+ if(tgt){const reach=meera?150:14;if(td>reach)zMove(p,tgt.x,tgt.y,p.spd,dt);else{p.moving=false;p.a=Math.atan2(tgt.y-p.y,tgt.x-p.x);if(p.hitT<=0){p.hitT=meera?.8:.7;if(meera){try{laserFx13(p,tgt,0x8a5cff)}catch(e){}tgt.hp-=30}else{p.pose='punch';p.atkP=.6;setTimeout(()=>{p.pose=null},250);tgt.hp-=28}if(tgt.hp<=0&&!tgt.dead)killPed(tgt,'ally')}}}
+ else{const d=Math.hypot(P.x-p.x,P.y-p.y);if(d>30)zMove(p,P.x+(meera?14:-14),P.y+10,p.spd,dt);else p.moving=false}
+ p.run=!!tgt}
+const _uped25=updatePed;updatePed=function(p,dt){if(!p.dead){if(p.kind==='alien'){try{alienAI25(p,dt)}catch(e){}return}if(p.kind==='ally'){try{allyAI25(p,dt)}catch(e){}return}}return _uped25(p,dt)};
+const _kp25=killPed;killPed=function(p,by){const was=p.kind==='alien'&&!p.dead;const r=_kp25.apply(this,arguments);if(was&&p.dead){pickups.push({x:p.x,y:p.y,type:'cash',amt:Math.floor(rr2(60,160))});if(Math.hypot(p.x-P.x,p.y-P.y)<600)toast('👽 Raider down!',.8)}return r};
+const _up25=updatePlayer;updatePlayer=function(dt){const r=_up25.apply(this,arguments);try{const d=Math.min(.1,dt||.016);watchTick(d);watchMesh25();watchGlow25();raidTick(d);famTick(d)}catch(e){console.warn('fx25',e)}return r};
 const _sg12=startGame;startGame=async function(){const r=await _sg12.apply(this,arguments);try{setTimeout(intro12Start,250)}catch(e){}return r};
 
 // ===== fx13: Raksha Force heroes in the city, parked helicopters, animals off roads, highways to other states =====
@@ -4854,7 +4960,9 @@ function toggleVeh(){
   audioInit();if(P.dead)return;
   if(P.veh){const v=P.veh,c=Math.cos(v.a),s=Math.sin(v.a);
     if(Math.abs(v.v)>120){toast('Slow down to get out!',1.2);return}
-    if((v.alt||0)>1.5){toast('🚁 Land first - hold BRAKE to descend',1.4);return}
+    if((v.alt||0)-(v.roofH||0)>1.5){toast('🚁 Land first - hold BRAKE to descend',1.4);return}
+    if(v.type==='heli'&&v.roofB&&v.roofH>1){const b=v.roofB;let ok2=null;for(const[ux,uy]of[[-s,c],[s,-c],[c,s],[-c,-s]]){const x=v.x+ux*(v.W/2+10),y=v.y+uy*(v.W/2+10);if(inB(b,x,y)){ok2=[x,y];break}}if(!ok2)ok2=[v.x,v.y];
+      P.x=ok2[0];P.y=ok2[1];v.driver=null;v.parked=true;P.veh=null;P.jy=0;P.glide={mode:'roof',b,alt:groundH(b.cx,b.cy)+b.h+.02,a:camYaw};toast('🏢 You landed on the roof',1.4);return}
     const opts=[[-s,c,v.W/2+12],[s,-c,v.W/2+12],[c,s,v.L/2+12],[-c,-s,v.L/2+12]];let ok=null;
     const freeF=v.water?circleFree:(x,y,r)=>tileAt(x-r,y-r)!==BD&&tileAt(x+r,y-r)!==BD&&tileAt(x-r,y+r)!==BD&&tileAt(x+r,y+r)!==BD;
     for(const[ux,uy,d]of opts){const x=v.x+ux*d,y=v.y+uy*d;if(freeF(x,y,6)){ok=[x,y];break}}
