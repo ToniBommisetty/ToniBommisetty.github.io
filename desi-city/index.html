@@ -593,6 +593,7 @@ const waterMat=new THREE.MeshStandardMaterial({color:0x1b86c2,roughness:.07,meta
 const GT={[G]:'#5e9a3b',[SW]:'#b8b0a2',[SA]:'#e7d39c',[TA]:'#6e7276',[PK]:'#4f9535',[PZ]:'#cfc1aa',[RW]:'#46484c',[RD]:'#3a3a3f',[BD]:'#77716a',[WA]:'#c2ae7c'};
 function groundTex(tx0,ty0){const size=QUAL===0?1024:2048;return canvasTex(size,size,(g)=>{const t=W.t;g.scale(size/2048,size/2048);g.translate(-tx0*T,-ty0*T);
   for(let y=ty0;y<ty0+64;y++)for(let x=tx0;x<tx0+64;x++){const v=t[y*N+x],px=x*T,py=y*T;g.fillStyle=W.snow&&(v===G||v===PK)?'#eaf0f4':GT[v];g.fillRect(px,py,T,T);
+     if((v===SW||v===PZ)&&!W.snow){const st=8;for(let sy=0;sy<T;sy+=st)for(let sx=0;sx<T;sx+=st){const r=th(x*7+sx,y*13+sy);g.fillStyle=v===SW?`rgb(${178+r*30|0},${168+r*28|0},${150+r*26|0})`:`rgb(${196+r*26|0},${182+r*24|0},${160+r*22|0})`;g.fillRect(px+sx+.6,py+sy+.6,st-1.2,st-1.2);if(r<.12){g.fillStyle='rgba(60,50,40,.18)';g.fillRect(px+sx+1,py+sy+1,st-2,st-2)}}g.fillStyle='rgba(70,60,50,.25)';for(let k=0;k<=T;k+=st){g.fillRect(px+k-.3,py,.6,T);g.fillRect(px,py+k-.3,T,.6)}}
     const nn=v===RD||v===TA||v===RW?16:v===G||v===PK?14:v===SA?10:5;for(let i=0;i<nn;i++){const r=th(x*31+i,y*17+i*3);g.fillStyle=r<.5?'rgba(0,0,0,.08)':'rgba(255,255,255,.07)';const big=v===G||v===PK;g.fillRect(px+th(x+i*7,y)*30,py+th(x,y+i*5)*30,big?2:1.5,big?4:1.5)}
     if(v===SW){g.fillStyle='rgba(0,0,0,.12)';g.fillRect(px,py,T,1);g.fillRect(px,py,1,T);g.fillRect(px+16,py,1,T);g.fillRect(px,py+16,T,1)}
     else if(v===PZ){g.fillStyle='rgba(0,0,0,.08)';g.fillRect(px,py,T,1);g.fillRect(px,py,1,T)}
@@ -1096,7 +1097,7 @@ const groundY=(x,y)=>{const t=tileAt(x,y);return t===SW?0:0};
 
 // ---------- camera ----------
 let camYaw=-Math.PI/2,camPitch=.3,lastLook=-1e9;const camPos=new THREE.Vector3(),camTgt=new THREE.Vector3();
-const SKY_STD={dayTop:'#2f7fd6',dayBot:'#d6ebf8',duskTop:'#3b4f8f',duskBot:'#ffab6b',nightTop:'#050a1c',nightBot:'#18223f'},SKY_RETRO={dayTop:'#3c8fe8',dayBot:'#d9ecf7',duskTop:'#3b4f8f',duskBot:'#ffab6b',nightTop:'#060b1e',nightBot:'#1c2742'};
+const SKY_STD={dayTop:'#2a78d8',dayBot:'#c4e0f7',duskTop:'#3b4f8f',duskBot:'#ffab6b',nightTop:'#050a1c',nightBot:'#18223f'},SKY_RETRO={dayTop:'#3c8fe8',dayBot:'#d9ecf7',duskTop:'#3b4f8f',duskBot:'#ffab6b',nightTop:'#060b1e',nightBot:'#1c2742'};
 const skyC={};function applySkyPalette(){const p=RETRO?SKY_RETRO:SKY_STD;for(const k in p)(skyC[k]||(skyC[k]=new THREE.Color())).set(p[k])}applySkyPalette();
 function lerpA(a,b,k){return a+wrapA(b-a)*Math.min(1,k)}
 function render3D(dt){
@@ -3404,6 +3405,32 @@ function sign22Build(){if(!W||!W.real||!REAL)return;const NV=navBuild();if(!NV||
   if(made)placed.push([je,jn])}}
 const _bc22=buildCity3D;buildCity3D=function(){const r=_bc22.apply(this,arguments);try{SIGN22.key='';sign22Build()}catch(e){console.warn('sign22',e)}return r};
 const _up22=updatePlayer;updatePlayer=function(dt){const r=_up22.apply(this,arguments);try{SIGN22.t-=dt||.016;if(SIGN22.t<=0){SIGN22.t=3;if(!INT.active)sign22Build();if(SIGN22.g)SIGN22.g.visible=!INT.active}}catch(e){}return r};
+
+// ===== fx23: zebra crossings and working traffic lights at junctions =====
+const X23={g:null,key:'',t:0,lamps:[]};
+function city23Build(){if(!W||!W.real||!REAL)return;const NV=navBuild();if(!NV)return;const[pe,pn]=px2m(P.x,P.y);
+ const key=REAL.cE+','+REAL.cN+','+Math.round(pe/100)+','+Math.round(pn/100);if(key===X23.key&&X23.g)return;X23.key=key;
+ if(X23.g){scene.remove(X23.g);X23.g.traverse(o=>{if(o.geometry&&o.geometry!==X23.geo)o.geometry.dispose()})}
+ const G=new THREE.Group();X23.g=G;scene.add(G);X23.lamps=[];
+ const J=[];const lim=WIN-25;for(let i=0;i<NV.X.length;i++){if(NV.adj[i].length<3)continue;const d=Math.hypot(NV.X[i]-pe,NV.Y[i]-pn);if(d>230)continue;if(Math.abs(NV.X[i]-REAL.cE)>lim||Math.abs(NV.Y[i]-REAL.cN)>lim)continue;J.push([d,i])}
+ J.sort((a,b)=>a[0]-b[0]);const used=[];const stripes=[];
+ for(const[,j]of J){if(used.length>=(QUAL===0?8:16))break;const je=NV.X[j],jn=NV.Y[j];if(used.some(u=>Math.hypot(u[0]-je,u[1]-jn)<45))continue;used.push([je,jn]);
+  const arms=[];for(const k of NV.adj[j]){let ae=NV.X[k]-je,an=NV.Y[k]-jn;const L=Math.hypot(ae,an)||1;ae/=L;an/=L;if(arms.some(a=>a[0]*ae+a[1]*an>.8))continue;arms.push([ae,an])}
+  for(const[ae,an]of arms){const ce=je+ae*9,cn=jn+an*9;const qe=-an,qn=ae;for(let k=-3;k<=3;k++){const se=ce+qe*k*1.05,sn=cn+qn*k*1.05;const[px,py]=m2px(se,sn);if(tileAt(px,py)!==RD)continue;stripes.push([px,py,Math.atan2(-ae,an)])}}
+  // traffic lights on two opposite corners
+  for(const s of[1,-1]){const[a0,a1]=arms[0],b=arms[1]||[-a1,a0];const ce=je+(a0+b[0])*7*s,cn=jn+(a1+b[1])*7*s;const[px,py]=m2px(ce,cn);const tt=tileAt(px,py);if(tt===BD||tt===RD)continue;
+   const gh=groundH(px,py),grp=new THREE.Group();grp.position.set(px*S,gh,py*S);grp.rotation.y=Math.atan2(-(a0),a1)+(s>0?0:Math.PI);
+   const pole=new THREE.Mesh(X23.pole||(X23.pole=new THREE.CylinderGeometry(.08,.1,4.2,8)),X23.pm||(X23.pm=new THREE.MeshStandardMaterial({color:0x2b2e33,metalness:.6,roughness:.4})));pole.position.y=2.1;grp.add(pole);
+   const box=new THREE.Mesh(X23.box||(X23.box=new THREE.BoxGeometry(.42,1.15,.36)),X23.bm||(X23.bm=new THREE.MeshStandardMaterial({color:0x1d1f22,roughness:.5})));box.position.set(0,3.9,.2);grp.add(box);
+   const L={};['r','y','g'].forEach((c,i)=>{const m=new THREE.Mesh(X23.lg||(X23.lg=new THREE.CircleGeometry(.13,16)),new THREE.MeshBasicMaterial({color:0x222222,toneMapped:false}));m.position.set(0,4.27-i*.36,.385);grp.add(m);L[c]=m.material});
+   X23.lamps.push({L,ph:(s>0?0:1)});G.add(grp)}}
+ if(stripes.length){const geo=X23.geo||(X23.geo=new THREE.BoxGeometry(.55,.02,2.8));const mat=X23.sm||(X23.sm=new THREE.MeshStandardMaterial({color:0xf2f2ee,roughness:.7,polygonOffset:true,polygonOffsetFactor:-2}));
+  const im=new THREE.InstancedMesh(geo,mat,stripes.length);const M4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),v=new THREE.Vector3(),sc=new THREE.Vector3(1,1,1);
+  stripes.forEach(([px,py,ry],i)=>{e.set(0,ry,0);q.setFromEuler(e);v.set(px*S,groundH(px,py)+.035,py*S);M4.compose(v,q,sc);im.setMatrixAt(i,M4)});im.receiveShadow=true;G.add(im)}}
+const C23={r:new THREE.Color(0xff2a1a),y:new THREE.Color(0xffc21a),g:new THREE.Color(0x22ff66),off:new THREE.Color(0x2a2a2a)};
+function lights23Tick(){if(!X23.lamps.length)return;const c=(tsec%16);for(const lp of X23.lamps){const t=(c+lp.ph*8)%16;const st=t<7?'g':t<8.5?'y':'r';for(const k of['r','y','g'])lp.L[k].color.copy(k===st?C23[k]:C23.off)}}
+const _bc23=buildCity3D;buildCity3D=function(){const r=_bc23.apply(this,arguments);try{X23.key='';city23Build()}catch(e){console.warn('city23',e)}return r};
+const _up23=updatePlayer;updatePlayer=function(dt){const r=_up23.apply(this,arguments);try{X23.t-=dt||.016;if(X23.t<=0){X23.t=2;if(!INT.active)city23Build()}if(X23.g)X23.g.visible=!INT.active;lights23Tick()}catch(e){}return r};
 const _sg12=startGame;startGame=async function(){const r=await _sg12.apply(this,arguments);try{setTimeout(intro12Start,250)}catch(e){}return r};
 
 // ===== fx13: Raksha Force heroes in the city, parked helicopters, animals off roads, highways to other states =====
@@ -3754,7 +3781,7 @@ function seasonLight(dl){const s=SEAS[SEASON.i];const wet=SEASON.rain,sn=SEASON.
   sun.intensity*=s.sun*(1-wet*.35);hemi.intensity*=(1-wet*.3);scene.environmentIntensity*=Math.min(1,s.sun)*(1-wet*.4);
   if(wet>.05||sn>.05){const g=new THREE.Color(.55,.6,.66);scene.fog.color.lerp(g,Math.max(wet,sn*.8)*.7);skyU.top.value.lerp(g,Math.max(wet,sn*.6)*.75);skyU.bot.value.lerp(g,Math.max(wet,sn*.6)*.6)}
   if(SEASON.flash>0){hemi.intensity+=SEASON.flash*3;SEASON.flash=Math.max(0,SEASON.flash-.08)}
-  scene.fog.far=(RETRO?230:240)*(1-.45*Math.max(wet,sn));scene.fog.near=(RETRO?40:45)*(1-.6*Math.max(wet,sn));
+  scene.fog.far=(RETRO?360:380)*(1-.45*Math.max(wet,sn));scene.fog.near=(RETRO?85:90)*(1-.6*Math.max(wet,sn));
   if(LEAFM){const want=W.snow?'#e8f0f2':s.leaf;if(LEAFM._seas!==want){LEAFM.color.set(want);LEAFM._seas=want}}
   waterMat.color.set(wet>.3?0x2f6f8f:RETRO?0x1fb3b8:0x1b86c2);seaMat.color.set(wet>.3?0x2f6f8f:RETRO?0x19b4b4:0x1786c4)}
 let rainLines=null,rainPos=null;
