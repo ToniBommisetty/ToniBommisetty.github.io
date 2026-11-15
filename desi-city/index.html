@@ -1106,7 +1106,7 @@ function render3D(dt){
   const h=gameTime/60;const el=Math.sin((h-6)/12*Math.PI);const dl=clamp(el*2.2+.15,0,1);night=1-dl;const dusk=clamp(1-Math.abs(el)*4,0,1)*(h>4&&h<20?1:0);
   skyU.top.value.copy(skyC.nightTop).lerp(skyC.dayTop,dl).lerp(skyC.duskTop,dusk*.5);skyU.bot.value.copy(skyC.nightBot).lerp(skyC.dayBot,dl).lerp(skyC.duskBot,dusk*.8);scene.fog.color.copy(skyU.bot.value);
   const az=.7+(h-12)*.18,se=Math.max(.18,el);skyU.sunDir.value.set(Math.cos(az)*Math.cos(se),Math.sin(se),Math.sin(az)*Math.cos(se)).normalize();
-  sun.intensity=.08+2.15*dl;sun.color.setRGB(1,.92-dusk*.25,.82-dusk*.4);hemi.intensity=.2+.7*dl;scene.environmentIntensity=.15+.42*dl;seasonLight(dl);
+  sun.intensity=.08+2.15*dl;sun.color.setRGB(1,.92-dusk*.25,.82-dusk*.4);hemi.intensity=.2+.7*dl;scene.environmentIntensity=.15+.42*dl;seasonLight(dl);if(ZB.on&&!INT.active)zLight();
   wallMat.emissiveIntensity=night*.9;glassMat.emissiveIntensity=night*.4;signMat.emissiveIntensity=night*.7;
   // --- camera ---
   const now=performance.now();let tx=P.x*S,tz=P.y*S,ty=1.7+(P.veh?vehY(P.veh):Math.max(-1.2,P.wadeY||0)+(P.jy||0)*.6+(P.glide?P.glide.alt:groundH(P.x,P.y))),dist=VW<VH?6.2:5.2,ch=.0;if(P.glide)dist=9;
@@ -3431,6 +3431,65 @@ const C23={r:new THREE.Color(0xff2a1a),y:new THREE.Color(0xffc21a),g:new THREE.C
 function lights23Tick(){if(!X23.lamps.length)return;const c=(tsec%16);for(const lp of X23.lamps){const t=(c+lp.ph*8)%16;const st=t<7?'g':t<8.5?'y':'r';for(const k of['r','y','g'])lp.L[k].color.copy(k===st?C23[k]:C23.off)}}
 const _bc23=buildCity3D;buildCity3D=function(){const r=_bc23.apply(this,arguments);try{X23.key='';city23Build()}catch(e){console.warn('city23',e)}return r};
 const _up23=updatePlayer;updatePlayer=function(dt){const r=_up23.apply(this,arguments);try{X23.t-=dt||.016;if(X23.t<=0){X23.t=2;if(!INT.active)city23Build()}if(X23.g)X23.g.visible=!INT.active;lights23Tick()}catch(e){}return r};
+
+// ===== fx24: ZOMBIE WORLD — a rabid dog starts the outbreak; bitten people fall, convulse and rise as zombies 10 s later =====
+const ZB={on:(()=>{try{return localStorage.getItem('dc_zombie')!=='0'}catch(e){return true}})(),t:0,spawnT:2,dogT:0,surv:0,kills:0,best:(()=>{try{return +localStorage.getItem('dc_zbest')||0}catch(e){return 0}})()};
+const ZSKIN=['#7d8f6a','#8a9a78','#6f7d5f','#94a085'],ZRAG=['#4a4038','#5b4b3c','#3e4a3a','#6b5b4b','#584848','#3a3a42'];
+(function(){const st=document.createElement('style');st.textContent=`#bzomb{position:absolute;top:calc(env(safe-area-inset-top) + 130px);right:calc(env(safe-area-inset-right) + 114px);width:68px;height:32px;border-radius:16px;font-size:11px;flex-direction:row;gap:3px}
+#bzomb span{font-size:11px!important;font-weight:800}#bzomb.on{background:rgba(110,20,20,.85)!important;border-color:#ff5a4a!important}
+#zhud{position:fixed;top:calc(env(safe-area-inset-top) + 64px);left:50%;transform:translateX(-50%);z-index:6;pointer-events:none;display:none;background:rgba(40,0,0,.7);color:#fff;font:800 13px system-ui;padding:5px 12px;border-radius:12px;border:1px solid rgba(255,80,60,.6);white-space:nowrap}
+#zvig{position:fixed;inset:0;pointer-events:none;z-index:4;display:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(60,0,0,.38) 100%)}`;document.head.appendChild(st);
+ const b=document.createElement('div');b.className='b';b.id='bzomb';b.innerHTML='🧟 <span>Zombies</span>';document.body.appendChild(b);
+ const h=document.createElement('div');h.id='zhud';document.body.appendChild(h);const v=document.createElement('div');v.id='zvig';document.body.appendChild(v);
+ b.addEventListener('click',()=>zombSet(!ZB.on));})();
+function zombSet(on){ZB.on=!!on;try{localStorage.setItem('dc_zombie',on?'1':'0')}catch(e){}if(on){ZB.surv=0;ZB.kills=0;ZB.dogT=0;ZB.spawnT=1;toast('🧟 <b>ZOMBIE WORLD</b><br><small>A rabid dog is loose… survive as long as you can!</small>',3)}
+ else{for(const p of peds)if(p.zomb||p.inf||p.rabid){p.dead=true;p.deadT=99}toast('☀️ Zombie world off',1.4)}}
+function zRebuild(p){const m=ents.get(p);if(m){dropEnt(m);ents.delete(p)}}
+function zInfect(p,by){if(p.zomb||p.inf||p.dead||p.kind==='raksha'||p.kind==='cow'||p.kind==='dog'||p.kind==='cat')return;p.inf={t:0,x:p.x,y:p.y};p.moving=false;p.run=false;p.state='inf';
+ if(Math.hypot(p.x-P.x,p.y-P.y)<600)toast(by==='dog'?'🐕 A rabid dog bit someone!<br><small>They are falling… get away!</small>':'🧟 Someone got bitten!',1.6)}
+function zTurn(p){p.inf=null;p.zomb=true;p.kind='zombie';p.hostile=true;p.hp=110;p.spd=rr2(14,24);p.state='zomb';p.skin=rpick(ZSKIN);p.shirt=rpick(ZRAG);p.pants=rpick(ZRAG);p.saree=p.saree?rpick(ZRAG):p.saree;p.jacket=null;p.coat=null;p.cap=null;p.shades=false;p.chain=false;p.lota=false;p.cup=false;p.pose=null;zRebuild(p);
+ if(Math.hypot(p.x-P.x,p.y-P.y)<600){toast('🧟 They turned into a ZOMBIE!',1.4);shake=Math.max(shake,.6)}}
+function zNearest(p,R,f){let best=null,bd=R;for(const q of peds){if(q===p||q.dead||!f(q))continue;const d=Math.hypot(q.x-p.x,q.y-p.y);if(d<bd){bd=d;best=q}}return[best,bd]}
+function zMove(p,tx,ty,sp,dt){const dx=tx-p.x,dy=ty-p.y,d=Math.hypot(dx,dy)||1;p.a=Math.atan2(dy,dx);const nx=p.x+dx/d*sp*dt,ny=p.y+dy/d*sp*dt;
+ if(circleFree(nx,ny,5)&&tileAt(nx,ny)!==WA){p.x=nx;p.y=ny}else{const a2=p.a+(p.side||(p.side=rand()<.5?1:-1))*1.2;const mx=p.x+Math.cos(a2)*sp*dt,my=p.y+Math.sin(a2)*sp*dt;if(circleFree(mx,my,5)){p.x=mx;p.y=my}}p.moving=true;p.ph=(p.ph||0)+sp*dt*S*2}
+function zAI(p,dt){
+ if(p.inf){p.inf.t+=dt;p.x=p.inf.x;p.y=p.inf.y;p.moving=false;if(p.inf.t>=10)zTurn(p);return true}
+ if(p.rabid){const[t,d]=zNearest(p,1400,q=>(q.kind==='civ'||q.kind==='kid'||q.kind==='pilgrim'||q.kind==='golfer')&&!q.zomb&&!q.inf);
+  if(t){zMove(p,t.x,t.y,p.spd,dt);p.run=true;if(d<9){zInfect(t,'dog');p.rabid=false;p.kind='dog';p.state='walk';p.tm=3}}else{p.moving=false}return true}
+ if(p.zomb){p.run=false;const dP=P.dead||INT.active?1e9:Math.hypot(P.x-p.x,P.y-p.y);const[t,d]=zNearest(p,420,q=>!q.zomb&&!q.inf&&q.kind!=='cow'&&q.kind!=='dog'&&q.kind!=='cat'&&q.kind!=='raksha');
+  // groan now and then
+  if(rand()<.002&&dP<200)try{beep&&beep()}catch(e){}
+  if(dP<480&&(!t||dP<d)){if(dP>11)zMove(p,P.x,P.y,p.spd*(P.veh?1.25:1),dt);else{p.moving=false;p.biteT=(p.biteT||0)-dt;if(p.biteT<=0&&!P.veh){p.biteT=1;damagePlayer(16);toast('🧟 Bitten!',.6)}}
+   if(P.veh&&dP<14&&Math.hypot(P.veh.vx||0,P.veh.vy||0)>40){killPed(p,'veh')}}
+  else if(t){if(d>9)zMove(p,t.x,t.y,p.spd,dt);else{p.moving=false;zInfect(t)}}
+  else{p.wT=(p.wT||0)-dt;if(p.wT<=0){p.wT=rr2(2,5);p.wa=rand()*TAU}zMove(p,p.x+Math.cos(p.wa)*50,p.y+Math.sin(p.wa)*50,p.spd*.4,dt)}
+  return true}
+ // everyone else runs from zombies close by
+ if(p.kind==='civ'||p.kind==='kid'||p.kind==='pilgrim'){const[z,d]=zNearest(p,150,q=>q.zomb);if(z){p.state='flee';p.tm=3;p.fx=z.x;p.fy=z.y}}
+ return false}
+const _uped24=updatePed;updatePed=function(p,dt){if(ZB.on&&(p.inf||p.rabid||p.zomb||p.kind==='civ'||p.kind==='kid'||p.kind==='pilgrim')&&!p.dead){try{if(zAI(p,dt))return}catch(e){}}return _uped24(p,dt)};
+// poses: convulsing on the ground, zombie shuffle with arms forward, red-eyed rabid dog
+const _ah24=animHuman;animHuman=function(o,p,aim){_ah24(o,p,aim);const u=o.userData;if(!u||!u.body)return;
+ if(p.inf&&!p.dead){const k=p.inf.t;const lift=k>9?(k-9):0;u.body.rotation.set(0,0,Math.PI/2*(1-lift));u.body.position.set(Math.sin(tsec*41)*.03*(1-lift),.17+lift*(u.d.hipH-.17),Math.cos(tsec*37)*.02);
+  const j=(a)=>Math.sin(tsec*(23+a*7)+a)*.55*(k<9?1:0);u.shL.rotation.set(j(1),0,.6+j(2));u.shR.rotation.set(j(3),0,.6+j(4));u.elL.rotation.set(0,0,.5+j(5));u.elR.rotation.set(0,0,.5+j(6));u.hipL.rotation.set(0,0,j(7)*.6);u.hipR.rotation.set(0,0,j(8)*.6);u.knL.rotation.set(0,0,-.4+j(9)*.5);u.knR.rotation.set(0,0,-.4+j(10)*.5);return}
+ if(p.zomb&&!p.dead){const w=Math.sin((p.ph||0)*1.4);u.shL.rotation.set(.05,0,1.42+w*.08);u.shR.rotation.set(-.05,0,1.38-w*.08);u.elL.rotation.set(0,0,.15);u.elR.rotation.set(0,0,.2);u.body.rotation.x=Math.sin(tsec*1.7+p.x)*.08;u.body.rotation.z=(u.body.rotation.z||0)+.12}};
+const _ap24=animPet;animPet=function(o,p){_ap24(o,p);const u=o.userData;if(p.rabid&&!u.eyes24){u.eyes24=1;for(const z of[-.06,.06]){const e=new THREE.Mesh(GSPH,new THREE.MeshBasicMaterial({color:0xff1a00}));e.scale.setScalar(.035);e.position.set(.5,.52,z);o.add(e)}}if(p.rabid&&p.moving)o.position.y+=Math.abs(Math.sin(tsec*18))*.05};
+// spawning, HUD, mood
+function zSpot(a,b){for(let k=0;k<10;k++){const ang=rand()*TAU,d=rr2(a,b);const x=P.x+Math.cos(ang)*d,y=P.y+Math.sin(ang)*d;if(pedOK(tileAt(x,y))&&circleFree(x,y,6))return[x,y]}return null}
+function zTick(dt){const hud=$('zhud'),vig=$('zvig'),btn=$('bzomb');btn.classList.toggle('on',ZB.on);btn.querySelector('span').textContent=ZB.on?'ON':'Zombies';
+ if(!ZB.on||INT.active){hud.style.display='none';vig.style.display='none';return}vig.style.display='block';
+ let nz=0,ninf=0,dog=0;for(const p of peds){if(p.dead)continue;if(p.zomb&&Math.hypot(p.x-P.x,p.y-P.y)<1500)nz++;if(p.inf)ninf++;if(p.rabid)dog++}
+ if(!P.dead)ZB.surv+=dt;
+ // keep the outbreak going: a rabid dog when it's quiet, then a steady horde around you
+ ZB.dogT-=dt;if(!dog&&ZB.dogT<=0&&(nz<3||rand()<.3)){ZB.dogT=rr2(25,45);const s=zSpot(150,320);if(s)peds.push(makePed(s[0],s[1],{kind:'dog',rabid:true,hp:30,col:'#3b2a20',spd:58,state:'rabid',moving:true}))}
+ ZB.spawnT-=dt;const want=Math.min(QUAL===0?10:16,4+Math.floor(ZB.surv/20));if(ZB.spawnT<=0&&nz<want){ZB.spawnT=rr2(1.5,3.5);const s=zSpot(260,700);if(s){const q=makePed(s[0],s[1],{kind:'civ'});peds.push(q);zTurn(q)}}
+ const mm=Math.floor(ZB.surv/60),ss=Math.floor(ZB.surv%60);hud.style.display='block';
+ hud.textContent='🧟 '+nz+' zombies'+(ninf?' · 😵 '+ninf+' turning':'')+(dog?' · 🐕 rabid dog!':'')+' · ⏱️ '+mm+':'+String(ss).padStart(2,'0')+' · 💀 '+ZB.kills;
+ if(P.dead&&!ZB.deadShown){ZB.deadShown=1;if(ZB.surv>ZB.best){ZB.best=ZB.surv;try{localStorage.setItem('dc_zbest',ZB.best|0)}catch(e){}}toast('🧟 You survived '+mm+'m '+ss+'s · Best '+Math.floor(ZB.best/60)+'m '+Math.floor(ZB.best%60)+'s',3);setTimeout(()=>{ZB.surv=0;ZB.kills=0;ZB.deadShown=0},4000)}}
+const _kp24=killPed;killPed=function(p,by){const was=p.zomb&&!p.dead;const r=_kp24.apply(this,arguments);if(was&&p.dead){ZB.kills++;if(rand()<.25)pickups.push({x:p.x,y:p.y,type:rand()<.5?'cash':'ammo',amt:Math.floor(rr2(40,140))})}return r};
+function zLight(){const g=V24||(V24=new THREE.Color(0x6e7466));scene.fog.color.lerp(g,.65);scene.fog.far*=.55;scene.fog.near*=.4;sun.intensity*=.62;hemi.intensity*=.8;skyU.top.value.lerp(g,.55);skyU.bot.value.lerp(g,.7)}let V24=null;
+const _up24=updatePlayer;updatePlayer=function(dt){const r=_up24.apply(this,arguments);try{zTick(Math.min(.1,dt||.016))}catch(e){console.warn('z',e)}return r};
+setTimeout(()=>{if(ZB.on&&!ZB.told){ZB.told=1;toast('🧟 <b>ZOMBIE WORLD</b><br><small>A rabid dog is loose… survive! Tap 🧟 to switch off</small>',3.5)}},9000);
 const _sg12=startGame;startGame=async function(){const r=await _sg12.apply(this,arguments);try{setTimeout(intro12Start,250)}catch(e){}return r};
 
 // ===== fx13: Raksha Force heroes in the city, parked helicopters, animals off roads, highways to other states =====
