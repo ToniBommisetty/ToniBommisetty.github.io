@@ -590,7 +590,7 @@ const waterNormal2=waterNormal.clone();waterNormal2.repeat.set(1,1);waterNormal2
 const waterMat=new THREE.MeshStandardMaterial({color:0x1b86c2,roughness:.07,metalness:.1,normalMap:waterNormal2,normalScale:new THREE.Vector2(.55,.55),transparent:true,opacity:.86,depthWrite:false});
 
 // ---------- ground painting ----------
-const GT={[G]:'#5e9a3b',[SW]:'#b8b0a2',[SA]:'#e7d39c',[TA]:'#6e7276',[PK]:'#4f9535',[PZ]:'#cfc1aa',[RW]:'#46484c',[RD]:'#3a3a3f',[BD]:'#77716a',[WA]:'#c2ae7c'};
+const GT={[G]:'#6a9a3e',[SW]:'#c2ae98',[SA]:'#e7d39c',[TA]:'#8c8a86',[PK]:'#5a9a38',[PZ]:'#d3c4ae',[RW]:'#6c6b68',[RD]:'#7a7874',[BD]:'#77716a',[WA]:'#c2ae7c'};
 function groundTex(tx0,ty0){const size=QUAL===0?1024:2048;return canvasTex(size,size,(g)=>{const t=W.t;g.scale(size/2048,size/2048);g.translate(-tx0*T,-ty0*T);
   for(let y=ty0;y<ty0+64;y++)for(let x=tx0;x<tx0+64;x++){const v=t[y*N+x],px=x*T,py=y*T;g.fillStyle=W.snow&&(v===G||v===PK)?'#eaf0f4':GT[v];g.fillRect(px,py,T,T);
      if((v===SW||v===PZ)&&!W.snow){const st=8;for(let sy=0;sy<T;sy+=st)for(let sx=0;sx<T;sx+=st){const r=th(x*7+sx,y*13+sy);g.fillStyle=v===SW?`rgb(${178+r*30|0},${168+r*28|0},${150+r*26|0})`:`rgb(${196+r*26|0},${182+r*24|0},${160+r*22|0})`;g.fillRect(px+sx+.6,py+sy+.6,st-1.2,st-1.2);if(r<.12){g.fillStyle='rgba(60,50,40,.18)';g.fillRect(px+sx+1,py+sy+1,st-2,st-2)}}g.fillStyle='rgba(70,60,50,.25)';for(let k=0;k<=T;k+=st){g.fillRect(px+k-.3,py,.6,T);g.fillRect(px,py+k-.3,T,.6)}}
@@ -1097,7 +1097,7 @@ const groundY=(x,y)=>{const t=tileAt(x,y);return t===SW?0:0};
 
 // ---------- camera ----------
 let camYaw=-Math.PI/2,camPitch=.3,lastLook=-1e9;const camPos=new THREE.Vector3(),camTgt=new THREE.Vector3();
-const SKY_STD={dayTop:'#2a78d8',dayBot:'#c4e0f7',duskTop:'#3b4f8f',duskBot:'#ffab6b',nightTop:'#050a1c',nightBot:'#18223f'},SKY_RETRO={dayTop:'#3c8fe8',dayBot:'#d9ecf7',duskTop:'#3b4f8f',duskBot:'#ffab6b',nightTop:'#060b1e',nightBot:'#1c2742'};
+const SKY_STD={dayTop:'#1a5cd0',dayBot:'#8ec0ee',duskTop:'#3b4f8f',duskBot:'#ffab6b',nightTop:'#050a1c',nightBot:'#18223f'},SKY_RETRO={dayTop:'#1a5cd0',dayBot:'#8ec0ee',duskTop:'#3b4f8f',duskBot:'#ffab6b',nightTop:'#060b1e',nightBot:'#1c2742'};
 const skyC={};function applySkyPalette(){const p=RETRO?SKY_RETRO:SKY_STD;for(const k in p)(skyC[k]||(skyC[k]=new THREE.Color())).set(p[k])}applySkyPalette();
 function lerpA(a,b,k){return a+wrapA(b-a)*Math.min(1,k)}
 function render3D(dt){
@@ -3779,6 +3779,51 @@ const _up28=updatePlayer;updatePlayer=function(dt,I){const d=Math.min(.1,dt||.01
  try{const g=P.glide;if(g&&g.mode==='chute'&&g.open&&!P.veh){if(!chute28){chute28=chuteMesh28();scene.add(chute28)}chute28.visible=!INT.active;const s=Math.min(1,.25+(g.ot||0)*2.2);chute28.scale.set(s,s,s);chute28.position.set(P.x*S,g.alt+5.2,P.y*S);chute28.rotation.y=-P.a;chute28.rotation.z=Math.sin(tsec*1.3)*.05}else if(chute28)chute28.visible=false}catch(e){}
  return r};
 
+// ===== fx29: sunny realistic look — weathered concrete roads, paving, billboards, brighter sun =====
+// --- detail textures: R = worn asphalt/concrete with cracks, G = paving slabs, B = grass ---
+const DET29=(()=>{const s=512,c=document.createElement('canvas');c.width=c.height=s;const g=c.getContext('2d');const R=new Float32Array(s*s),Gp=new Float32Array(s*s),B=new Float32Array(s*s);
+ const nz=(n)=>{const a=new Float32Array(s*s);for(let i=0;i<s*s;i++)a[i]=Math.random();for(let k=0;k<n;k++){const b=new Float32Array(s*s);for(let y=0;y<s;y++)for(let x=0;x<s;x++){const i=y*s+x;b[i]=(a[i]*2+a[y*s+(x+1)%s]+a[y*s+(x+s-1)%s]+a[((y+1)%s)*s+x]+a[((y+s-1)%s)*s+x])/6}a.set(b)}return a};
+ const f1=nz(1),f2=nz(6),f3=nz(18);
+ for(let i=0;i<s*s;i++){R[i]=.52+(f1[i]-.5)*.22+(f2[i]-.5)*.5+(f3[i]-.5)*.9;B[i]=.5+(f1[i]-.5)*.5+(f2[i]-.5)*.6}
+ // paving slabs 8x8 per tile
+ const ts=64;for(let y=0;y<s;y++)for(let x=0;x<s;x++){const i=y*s+x,cx=Math.floor(x/ts),cy=Math.floor(y/ts);const r=((Math.sin(cx*12.9898+cy*78.233)*43758.5453)%1+1)%1;let v=.48+r*.12+(f1[i]-.5)*.18+(f2[i]-.5)*.25;const lx=x%ts,ly=y%ts;if(lx<2||ly<2)v=.3;Gp[i]=v}
+ const img=g.createImageData(s,s);for(let i=0;i<s*s;i++){const o=i*4;img.data[o]=Math.max(0,Math.min(255,R[i]*255));img.data[o+1]=Math.max(0,Math.min(255,Gp[i]*255));img.data[o+2]=Math.max(0,Math.min(255,B[i]*255));img.data[o+3]=255}g.putImageData(img,0,0);
+ // cracks and tar patches on the red channel
+ g.globalCompositeOperation='source-over';
+ for(let k=0;k<26;k++){let x=Math.random()*s,y=Math.random()*s,a=Math.random()*TAU;g.strokeStyle='rgba(40,'+(110)+',128,.85)';g.lineWidth=.8+Math.random()*1.4;g.beginPath();g.moveTo(x,y);const n=8+Math.random()*20;for(let j=0;j<n;j++){a+=(Math.random()-.5)*1.1;x+=Math.cos(a)*8;y+=Math.sin(a)*8;g.lineTo(x,y);if(Math.random()<.12){g.stroke();g.beginPath();g.moveTo(x,y);a+=(Math.random()<.5?1:-1)*.9}}g.stroke()}
+ for(let k=0;k<10;k++){g.fillStyle='rgba(60,128,128,.35)';g.beginPath();g.ellipse(Math.random()*s,Math.random()*s,10+Math.random()*34,6+Math.random()*20,Math.random()*3,0,TAU);g.fill()}
+ for(let k=0;k<14;k++){g.fillStyle='rgba(225,128,128,.18)';g.beginPath();g.ellipse(Math.random()*s,Math.random()*s,12+Math.random()*30,8+Math.random()*24,Math.random()*3,0,TAU);g.fill()}
+ const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=Math.min(8,maxAniso);t.colorSpace=THREE.NoColorSpace;return t})();
+function mask29(tx0,ty0){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');const img=g.createImageData(64,64);const t=W.t;
+ for(let y=0;y<64;y++)for(let x=0;x<64;x++){const v=t[(ty0+y)*N+tx0+x],o=(y*64+x)*4;img.data[o]=(v===RD||v===TA||v===RW)?255:0;img.data[o+1]=(v===SW||v===PZ)?255:0;img.data[o+2]=0;img.data[o+3]=255}
+ g.putImageData(img,0,0);const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.NoColorSpace;tx.magFilter=THREE.LinearFilter;return tx}
+function patchGround29(mat,mk){mat.userData.mk29=mk;mat.onBeforeCompile=sh=>{sh.uniforms.gMask={value:mk};sh.uniforms.gDet={value:DET29};
+ sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vWXZ29;').replace('#include <begin_vertex>','#include <begin_vertex>\nvWXZ29=(modelMatrix*vec4(position,1.0)).xz;');
+ sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform sampler2D gMask;uniform sampler2D gDet;varying vec2 vWXZ29;')
+  .replace('#include <map_fragment>','#include <map_fragment>\n{vec2 mk=texture2D(gMask,vMapUv).rg;vec3 d1=texture2D(gDet,vWXZ29*.25).rgb;vec3 d2=texture2D(gDet,vWXZ29*.061+.37).rgb;float rd=mix(d1.r,d2.r,.35);float dd=mix(mix(d1.b,rd,mk.r),d1.g,mk.g*(1.0-mk.r));diffuseColor.rgb*=.42+1.16*dd;}')};mat.customProgramCacheKey=()=>'g29';mat.needsUpdate=true}
+// --- billboards with home-grown ads ---
+const ADS29=[['DESI COLA','Thanda matlab Desi!','#c0392b','#fff'],['CHAI TIME','Kadak chai · 24 hrs','#e67e22','#fff'],['RAJA MOTORS','Drive like a king','#1f3a93','#ffd34d'],['BOLLY NIGHTS','Now showing · Cinema 7','#2c0e37','#ff5ad1'],['MASALA KING','Spice up your life','#f39c12','#3b1a00'],['GOLDEN SAREES','Wedding sale 50% off','#7b1e2b','#f6d365'],['SPEEDNET 5G','Fastest in the city','#16a085','#fff'],['DOSA EXPRESS','Hot, crispy, ₹49','#d35400','#fff8e1'],['METRO MALL','Shop · Eat · Play','#2d3436','#74b9ff']];
+const adTex29={};function adTex(i){if(adTex29[i])return adTex29[i];const[a,b,bg,fg]=ADS29[i];const t=canvasTex(512,232,(g,w,h)=>{const gr=g.createLinearGradient(0,0,w,h);gr.addColorStop(0,bg);gr.addColorStop(1,'#000');g.fillStyle=bg;g.fillRect(0,0,w,h);g.globalAlpha=.35;g.fillStyle=gr;g.fillRect(0,0,w,h);g.globalAlpha=1;
+ g.fillStyle='rgba(255,255,255,.12)';for(let k=0;k<6;k++){g.beginPath();g.arc(w*.85,h*.5,30+k*28,0,TAU);g.fill()}
+ g.fillStyle=fg;g.font='900 72px system-ui,Arial';g.textBaseline='middle';g.fillText(a,28,h*.4,w-56);g.font='600 34px system-ui,Arial';g.globalAlpha=.9;g.fillText(b,30,h*.75,w-60);g.globalAlpha=1;g.strokeStyle='rgba(255,255,255,.6)';g.lineWidth=6;g.strokeRect(3,3,w-6,h-6)});return adTex29[i]=t}
+function billboards29(G){if(!W||!W.real||!W.roadLines)return;const poleM=new THREE.MeshStandardMaterial({color:0x5f6266,metalness:.7,roughness:.45}),backM=new THREE.MeshStandardMaterial({color:0x2b2d30,roughness:.8});
+ const pole=new THREE.CylinderGeometry(.18,.22,1,8),board=new THREE.BoxGeometry(1,1,1);let n=0;const used=[];
+ for(let ri=0;ri<W.roadLines.length&&n<22;ri++){const r=W.roadLines[ri];if(r.w<7*8||r.c.length<6)continue;
+  for(let i=0;i+3<r.c.length&&n<22;i+=4){if(th(ri*7+i,i*3)>.55)continue;const x0=r.c[i],y0=r.c[i+1],x1=r.c[i+2],y1=r.c[i+3];const L=Math.hypot(x1-x0,y1-y0);if(L<8)continue;const nx=-(y1-y0)/L,ny=(x1-x0)/L,side=th(i,ri)<.5?1:-1;
+   const off=r.w/2+(th(ri,i)<.5?30:60);const bx=x0+nx*off*side,by=y0+ny*off*side;if(bx<40||by<40||bx>N*T-40||by>N*T-40)continue;const tl=tileAt(bx,by);let g0=groundH(bx,by),H=8+th(bx,by)*3;if(tl===BD){const rb=heliRoof25(bx,by);if(!rb||rb.h>40)continue;g0=groundH(rb.cx,rb.cy)+rb.h;H=3+th(bx,by)*2}else if(!(tl===G||tl===PK||tl===SW||tl===PZ))continue;else if(!circleFree(bx,by,14))continue;if(used.some(u=>Math.hypot(u[0]-bx,u[1]-by)<420))continue;used.push([bx,by]);
+   const grp=new THREE.Group();const Wd=10,Hb=4.4;for(const s2 of[-1,1]){const p=new THREE.Mesh(pole,poleM);p.scale.set(1,H,1);p.position.set(s2*Wd*.3,H/2,0);p.castShadow=true;grp.add(p)}
+   const bk=new THREE.Mesh(board,backM);bk.scale.set(Wd+.3,Hb+.3,.35);bk.position.set(0,H+Hb/2-.4,-.05);bk.castShadow=true;grp.add(bk);
+   const ad=new THREE.Mesh(new THREE.PlaneGeometry(Wd,Hb),new THREE.MeshStandardMaterial({map:adTex(Math.floor(th(bx*3,by)*ADS29.length)%ADS29.length),roughness:.6,emissive:0xffffff,emissiveIntensity:0}));ad.position.set(0,H+Hb/2-.4,.14);ad.userData.ad29=true;grp.add(ad);
+   const walk=new THREE.Mesh(board,poleM);walk.scale.set(Wd,.12,.8);walk.position.set(0,H-.55,.4);grp.add(walk);
+   grp.position.set(bx*S,g0,by*S);grp.rotation.y=Math.atan2(nx*side,ny*side)+Math.PI;G.add(grp);n++}}
+ G.userData.bb29=n}
+const _bc29=buildCity3D;buildCity3D=function(){const r=_bc29.apply(this,arguments);try{if(QUAL>0)GROUND_MATS.forEach((m,i)=>{const cx=i%2,cy=Math.floor(i/2);patchGround29(m,mask29(cx*64,cy*64))});if(city3d)billboards29(city3d)}catch(e){console.warn('fx29 build',e)}return r};
+// --- stronger, cleaner sunlight; billboards lit at night ---
+const FOG29=new THREE.Color('#a8cdf0');const _sl29=seasonLight;seasonLight=function(dl){_sl29.apply(this,arguments);try{const d=1-night;sun.intensity*=1+.25*d;hemi.intensity*=1+.05*d;sun.color.setRGB(1,.96,.88);if(d>.3&&!SEASON.rain&&!SEASON.snow){scene.fog.color.lerp(FOG29,.55*d)}if(scene.fog&&!SEASON.rain&&!SEASON.snow){scene.fog.far*=1+.25*d}
+ if(city3d&&city3d.userData.bb29&&(frameId%30===0)){const e=night>.5?.55:0;city3d.traverse(o=>{if(o.userData.ad29)o.material.emissiveIntensity=e})}}catch(e){}};
+vehMat.roughness=.22;vehMat.metalness=.35;M7.paint.roughness=.2;M7.paint.envMapIntensity=1.4;
+
+
 const _sg12=startGame;startGame=async function(){const r=await _sg12.apply(this,arguments);try{setTimeout(intro12Start,250)}catch(e){}return r};
 
 // ===== fx13: Raksha Force heroes in the city, parked helicopters, animals off roads, highways to other states =====
@@ -4803,8 +4848,8 @@ function gfxRender(sc,cam){sc=sc||scene;cam=cam||camera;if(GFX.q!==QUAL||GFX.ret
   GFX.rp.scene=sc;GFX.rp.camera=cam;if(GFX.gtao&&(GFX.gtao.scene!==sc||GFX.gtao.camera!==cam)){GFX.gtao.scene=sc;GFX.gtao.camera=cam;GFX.gtao.setSize(Math.round(VW*DPR*.5),Math.round(VH*DPR*.5))}if(GFX.grade)GFX.grade.uniforms.vig.value=sc===scene?.32:.22;
   // bloom: subtle by day, stronger at night so windows, signs, lamps and neon glow
   const n=sc===scene?night:.15;renderer.toneMappingExposure=sc===scene?1-.12*n:.8;GFX.bloom.strength=.12+.3*n;GFX.bloom.threshold=.95-.12*n;GFX.bloom.radius=.35;
-  if(RETRO){GFX.bloom.strength=.14+.3*n;GFX.bloom.threshold=.93-.12*n;GFX.bloom.radius=.4;if(GFX.grade){const u=GFX.grade.uniforms;u.sat.value=1.2;u.con.value=1.06;u.warm.value=.02;u.vig.value=.22;u.pink.value=0}if(GFX.trails)GFX.trails.uniforms.damp.value=P.veh&&Math.abs(P.veh.spd||0)>40?.6:.42}
-  else if(GFX.grade){const u=GFX.grade.uniforms;u.sat.value=1.12;u.con.value=1.06;u.warm.value=.02;u.pink.value=0}
+  if(RETRO){GFX.bloom.strength=.14+.3*n;GFX.bloom.threshold=.93-.12*n;GFX.bloom.radius=.4;if(GFX.grade){const u=GFX.grade.uniforms;u.sat.value=1.24-.1*n;u.con.value=1.13;u.warm.value=.035;u.vig.value=.2;u.pink.value=0}if(GFX.trails)GFX.trails.uniforms.damp.value=P.veh&&Math.abs(P.veh.spd||0)>40?.6:.42}
+  else if(GFX.grade){const u=GFX.grade.uniforms;u.sat.value=1.24-.1*n;u.con.value=1.13;u.warm.value=.035;u.pink.value=0}
   GFX.comp.render()}
 
 // fine surface detail for the ground (tiny bumps catch the low sun)
